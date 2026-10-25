@@ -1,0 +1,534 @@
+<title>BC25 Sandbox</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* BC25 Sandbox — navy/gold, tabbed simulator. Illustrative data (prototype). */
+  :root {
+    --bg: #f3f5f9; --surface: #ffffff; --surface-2: #eef1f6; --ink: #0f1830; --fg: #22304c;
+    --muted: #5e6b85; --line: #e0e4ec; --gold: #a9801f; --gold-bright: #caa33a; --navy: #0e1a33;
+    --up: #1f9d57; --down: #d1495b; --shadow: 0 1px 3px rgba(16,24,48,.08);
+    --f-display: "Fraunces", Georgia, serif; --f-body: "Inter", system-ui, -apple-system, sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --bg:#0a1120; --surface:#111c32; --surface-2:#0d1730; --ink:#eaeef6; --fg:#d6def0; --muted:#93a0bd;
+    --line:#223150; --gold:#d9b24a; --gold-bright:#eac756; --navy:#0e1a33;
+    --up:#3ac17e; --down:#e5677a; --shadow:0 1px 3px rgba(0,0,0,.4); color-scheme:dark; }}
+  :root[data-theme="dark"]{
+    --bg:#0a1120; --surface:#111c32; --surface-2:#0d1730; --ink:#eaeef6; --fg:#d6def0; --muted:#93a0bd;
+    --line:#223150; --gold:#d9b24a; --gold-bright:#eac756; --navy:#0e1a33;
+    --up:#3ac17e; --down:#e5677a; --shadow:0 1px 3px rgba(0,0,0,.4); color-scheme:dark; }
+
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--fg);font-family:var(--f-body);line-height:1.5;margin:0}
+  .mono{font-family:var(--f-mono)} .muted{color:var(--muted)} .sm{font-size:13px}
+  .up{color:var(--up)} .down{color:var(--down)} .tnum{font-variant-numeric:tabular-nums}
+  h1,h2,h3{font-family:var(--f-display);color:var(--ink);margin:0;line-height:1.15;text-wrap:balance}
+
+  .wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));
+    padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 48px}
+
+  header.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px;color:var(--ink)}
+  .brand .bull{font-size:22px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}
+  .logo-coin{height:34px;width:34px;border-radius:50%;object-fit:contain;flex:none;box-shadow:0 1px 5px rgba(0,0,0,.3)}
+  .coin-ic{height:15px;width:15px;border-radius:50%;object-fit:contain;vertical-align:-3px;margin-right:5px}
+  .mascot .face .bullimg{height:44px;width:44px;object-fit:contain;display:block}
+  .signup{border-color:var(--gold)}
+  .signup .input-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .signup input{flex:1;min-width:180px;font-family:var(--f-body)}
+  .pill{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--gold);border:1px solid var(--gold);border-radius:999px;padding:2px 8px}
+  .iconbtn{background:transparent;border:1px solid var(--line);color:var(--fg);border-radius:9px;
+    padding:6px 10px;cursor:pointer;font-size:13px}
+  .iconbtn:hover{border-color:var(--gold)}
+
+  /* mascot */
+  .mascot{display:flex;gap:10px;align-items:flex-start;background:linear-gradient(180deg,var(--surface),var(--surface-2));
+    border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0 14px}
+  .mascot .face{font-size:30px;line-height:1}
+  .mascot .say{font-size:14px}
+  .mascot .say b{color:var(--ink)}
+
+  /* tabs */
+  nav.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none}
+  nav.tabs::-webkit-scrollbar{display:none}
+  .tab{white-space:nowrap;background:var(--surface);border:1px solid var(--line);color:var(--fg);
+    border-radius:999px;padding:8px 14px;cursor:pointer;font-size:14px;font-weight:600}
+  .tab.active{background:var(--gold);border-color:var(--gold);color:#201700}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+  .card h2{font-size:17px;margin-bottom:4px} .card h3{font-size:15px;margin-bottom:8px}
+  .row{display:flex;gap:12px;flex-wrap:wrap} .row>*{min-width:0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:460px){.grid2{grid-template-columns:1fr}}
+
+  .stat{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;flex:1}
+  .stat .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .stat .v{font-size:22px;font-weight:800;color:var(--ink);margin-top:3px}
+  .stat .v.big{font-size:27px}
+
+  label.fld{display:block;margin:10px 0}
+  label.fld .lab{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:5px}
+  input[type=number],input[type=email],input[type=range]{width:100%;background:var(--bg);border:1px solid var(--line);
+    color:var(--fg);border-radius:10px;padding:11px 12px;font-size:16px;font-family:var(--f-mono)}
+  input[type=range]{padding:0}
+  .btn{background:var(--gold);color:#201700;border:none;border-radius:11px;padding:12px 16px;font-weight:800;
+    font-size:15px;cursor:pointer;width:100%}
+  .btn:hover{background:var(--gold-bright)} .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.alt{background:transparent;color:var(--fg);border:1px solid var(--line)} .btn.alt:hover{border-color:var(--gold)}
+  .btn.sm{width:auto;padding:8px 13px;font-size:13px}
+  .quote{background:var(--surface-2);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px;margin-top:8px}
+  .quote .ln{display:flex;justify-content:space-between;padding:2px 0}
+
+  canvas{width:100%;height:auto;display:block;border-radius:10px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;margin-top:8px}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:-1px}
+
+  .badges{display:flex;flex-wrap:wrap;gap:8px}
+  .badge{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px;background:var(--surface-2)}
+  .badge.locked{opacity:.4;filter:grayscale(1)}
+  .badge .e{font-size:15px}
+
+  .pl{font-weight:700}
+  .soon{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);
+    background:var(--gold-bright);border-radius:6px;padding:2px 7px}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(40px);background:var(--navy);
+    color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;box-shadow:0 8px 28px rgba(0,0,0,.3);
+    opacity:0;transition:.25s;z-index:50;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .foot{color:var(--muted);font-size:12px;text-align:center;margin-top:18px;line-height:1.6}
+  .disc{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--muted);margin-top:12px}
+  .bearbar{height:14px;border-radius:7px;background:var(--surface-2);overflow:hidden;border:1px solid var(--line)}
+  .bearbar>span{display:block;height:100%;background:var(--gold)}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><img src="/coin-logo.png" class="logo-coin" alt="BC25"> BC25 Sandbox <span class="pill">Beta</span></div>
+    <div style="display:flex;gap:6px">
+      <button class="iconbtn" id="themeBtn" title="Toggle theme">◐</button>
+      <button class="iconbtn" id="resetBtn" title="Reset sandbox">↻ Reset</button>
+    </div>
+  </header>
+
+  <div class="mascot"><div class="face" id="mFace"><img src="/bull-logo.png" class="bullimg" alt=""></div><div class="say" id="mSay"></div></div>
+
+  <nav class="tabs" id="tabs"></nav>
+
+  <!-- DASHBOARD -->
+  <section data-view="dashboard">
+    <div class="row" style="margin-bottom:14px">
+      <div class="stat"><div class="k">Portfolio value</div><div class="v big tnum" id="pv">—</div><div class="sm" id="pvpl"></div></div>
+    </div>
+    <div class="grid2">
+      <div class="stat"><div class="k">Test USDC</div><div class="v tnum" id="sUsdc">—</div></div>
+      <div class="stat"><div class="k">BC25 shares</div><div class="v tnum" id="sShares">—</div></div>
+      <div class="stat"><div class="k"><img src="/coin-logo.png" class="coin-ic" alt="">BC25 NAV / share</div><div class="v tnum" id="sNav">—</div><div class="sm" id="sNavChg"></div></div>
+      <div class="stat"><div class="k">Your BC25 value</div><div class="v tnum" id="sBcVal">—</div></div>
+    </div>
+    <div class="card signup" style="margin-top:14px">
+      <h3>🔔 Be an early supporter of BC25</h3>
+      <p class="muted sm">BC25 is being built in the open. Join the list to follow our progress, get early access to new features, and be first to know when we launch. As a thank-you, early supporters and active community members <b>may be eligible for perks, recognition, or future opportunities</b> as BC25 grows — we're exploring the best ways to reward the people who showed up first.</p>
+      <div class="input-row">
+        <input type="email" id="joinEmail" placeholder="you@email.com">
+        <button class="btn sm" id="joinBtn" style="width:auto">Keep me updated</button>
+      </div>
+      <p class="sm muted" id="joinNote" style="margin-top:8px">No spam. This is not an offer, and not a promise of any reward, token, airdrop, or financial return.</p>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3>What's inside BC25 <span class="muted sm">(illustrative weights)</span></h3>
+      <div id="basket"></div>
+    </div>
+    <div class="card">
+      <h3>Achievements</h3>
+      <div class="badges" id="badges"></div>
+    </div>
+  </section>
+
+  <!-- MINT / REDEEM -->
+  <section data-view="invest" hidden>
+    <div class="card">
+      <h2>Mint BC25 <span class="muted sm">· primary market, at NAV</span></h2>
+      <p class="muted sm">You deposit test USDC and receive BC25 shares priced at NAV. A 1% entry fee goes to the protocol treasury.</p>
+      <label class="fld"><span class="lab">Deposit (test USDC)</span><input type="number" id="mintAmt" placeholder="1000" min="0"></label>
+      <div class="quote" id="mintQuote"></div>
+      <button class="btn" id="mintBtn" style="margin-top:10px">Mint BC25</button>
+    </div>
+    <div class="card">
+      <h2>Redeem BC25 <span class="muted sm">· back to USDC</span></h2>
+      <p class="muted sm">Burn BC25 shares for their NAV value in USDC. A 2% exit fee applies.</p>
+      <label class="fld"><span class="lab">Redeem (BC25 shares)</span><input type="number" id="redAmt" placeholder="500" min="0"></label>
+      <div class="quote" id="redQuote"></div>
+      <button class="btn alt" id="redBtn" style="margin-top:10px">Redeem</button>
+    </div>
+  </section>
+
+  <!-- SWAP -->
+  <section data-view="swap" hidden>
+    <div class="card">
+      <h2>Swap on the DEX <span class="muted sm">· secondary market</span></h2>
+      <p class="muted sm">On a real exchange you buy BC25 from other holders — <b>no protocol fee</b>, just a small market spread. Arbitragers keep the market price near NAV. (This is the "two-market" model: mint at NAV with a fee, or buy on the DEX at the market price.)</p>
+      <label class="fld"><span class="lab">Spend (test USDC)</span><input type="number" id="swapAmt" placeholder="250" min="0"></label>
+      <div class="quote" id="swapQuote"></div>
+      <button class="btn" id="swapBtn" style="margin-top:10px">Buy BC25 on DEX</button>
+    </div>
+    <div class="card">
+      <h2>Send BC25 <span class="muted sm">· the token moves freely</span></h2>
+      <p class="muted sm">BC25 is a normal transferable ERC token — send it to a friend's wallet. (Simulated.)</p>
+      <label class="fld"><span class="lab">Amount (BC25)</span><input type="number" id="sendAmt" placeholder="10" min="0"></label>
+      <label class="fld"><span class="lab">To (any name/address)</span><input type="email" id="sendTo" placeholder="vitalik.eth" style="font-family:var(--f-body)"></label>
+      <button class="btn alt" id="sendBtn">Send</button>
+    </div>
+  </section>
+
+  <!-- TIME MACHINE -->
+  <section data-view="time" hidden>
+    <div class="card">
+      <h2>🕰️ Time Machine</h2>
+      <p class="muted sm">If you had invested in BC25 instead of just holding BTC or ETH… (illustrative history; the real site uses live data.)</p>
+      <label class="fld"><span class="lab">Amount invested: <b id="tmAmtL" class="mono">$1,000</b></span><input type="range" id="tmAmt" min="100" max="25000" step="100" value="1000"></label>
+      <label class="fld"><span class="lab">How long ago: <b id="tmMoL" class="mono">12 months</b></span><input type="range" id="tmMo" min="1" max="12" step="1" value="12"></label>
+      <canvas id="tmChart" width="640" height="240"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--gold)"></i>BC25</span>
+        <span><i style="background:#f7931a"></i>BTC</span>
+        <span><i style="background:#627eea"></i>ETH</span>
+      </div>
+      <div class="grid2" style="margin-top:12px" id="tmResults"></div>
+      <div class="disc" id="tmTakeaway"></div>
+    </div>
+  </section>
+
+  <!-- SURVIVE THE BEAR -->
+  <section data-view="bear" hidden>
+    <div class="card">
+      <h2>🐻 Survive the Bear</h2>
+      <p class="muted sm">A crash is coming. BC25's defensive engine shifts toward stablecoins + gold to "lose less on the way down." Flip the switch and see how much you preserve vs plain BTC.</p>
+      <div style="display:flex;align-items:center;gap:12px;margin:12px 0">
+        <button class="btn sm" id="defBtn">🛡️ Defensive: OFF</button>
+        <span class="muted sm" id="defNote">Risk-on (fully exposed)</span>
+      </div>
+      <canvas id="bearChart" width="640" height="220"></canvas>
+      <div class="grid2" style="margin-top:12px">
+        <div class="stat"><div class="k">Plain BTC</div><div class="v tnum down" id="bBtc">—</div></div>
+        <div class="stat"><div class="k">Your BC25</div><div class="v tnum" id="bBc">—</div></div>
+      </div>
+      <button class="btn" id="bearBtn" style="margin-top:12px">▶ Run the crash</button>
+      <div class="disc" id="bearResult" hidden></div>
+    </div>
+  </section>
+
+  <!-- STAKE (SOON) -->
+  <section data-view="stake" hidden>
+    <div class="card">
+      <h2>Stake BC25 <span class="soon">Coming soon</span></h2>
+      <p class="muted sm">A future release may let you stake BC25 for extra rewards. Not live yet — here's the idea, and a spot to get notified.</p>
+      <div class="grid2" style="margin:12px 0">
+        <div class="stat"><div class="k">Example reward rate</div><div class="v">~6–8%</div><div class="sm muted">illustrative only</div></div>
+        <div class="stat"><div class="k">Status</div><div class="v" style="font-size:18px">In design</div></div>
+      </div>
+      <label class="fld"><span class="lab">Get notified + join the waitlist</span>
+        <input type="email" id="waitEmail" placeholder="you@email.com" style="font-family:var(--f-body)"></label>
+      <button class="btn" id="waitBtn">Notify me</button>
+      <p class="sm muted" id="waitNote" style="margin-top:8px"></p>
+    </div>
+  </section>
+
+  <div class="disc">⚠️ This is a <b>simulation/prototype</b>. No real money, no real tokens, nothing is on-chain. Numbers are illustrative to show how BC25 is intended to work. Not an offer, solicitation, or investment advice.</div>
+  <div class="foot">BC25 Defender Index · Bluechip Labs · sandbox prototype</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var LS="bc25_sandbox_v1";
+  var START_USDC=10000, NAV0=1.0379;
+  var fmt=function(n,d){d=d==null?2:d;return Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});};
+  var usd=function(n){return "$"+fmt(n,2);};
+
+  // ---- state ----
+  var state;
+  function fresh(){return {usdc:START_USDC, shares:0, nav:NAV0, navPrev:NAV0, badges:{}, joined:false};}
+  function load(){try{var s=JSON.parse(localStorage.getItem(LS));if(s&&typeof s.usdc==="number")return s;}catch(e){}return fresh();}
+  function save(){try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}}
+  state=load();
+
+  // ---- live market data (CoinGecko via /api/*, graceful fallback to demo data) ----
+  var BW={bitcoin:.09,ethereum:.08,solana:.08,ripple:.03,binancecoin:.03,cardano:.03,tron:.03,chainlink:.03,dogecoin:.03,"usd-coin":.057,tether:.057,dai:.057,"pax-gold":.0525};
+  var STABLE={"usd-coin":1,"tether":1,"dai":1};
+  var NAV_BASE=1.00;
+  var LIVE={ready:false,mode:false,bc:null,btc:null,eth:null,dayChg:0,baseIndex:NAV0};
+  function wsum(){var t=0;for(var k in BW)t+=BW[k];return t;}
+  function basketPath(series){
+    var L=Infinity;for(var c in BW){if(STABLE[c])continue;if(!series[c]||!series[c].length)return null;L=Math.min(L,series[c].length);}
+    if(!isFinite(L)||L<2)return null;var tw=wsum(),path=[];
+    for(var i=0;i<L;i++){var v=0;for(var c in BW){var w=BW[c]/tw;v+=STABLE[c]?w:w*(series[c][i]/series[c][0]);}path.push(v);}
+    var b=path[0];return path.map(function(x){return x/b;});
+  }
+  function sliceLive(arr,mo){var n=Math.max(2,Math.round(arr.length*(mo/12)));if(n>arr.length)n=arr.length;var s=arr.slice(arr.length-n);var b=s[0];return s.map(function(v){return v/b;});}
+  function loadHistory(){
+    fetch("/api/history?days=365").then(function(r){return r.json();}).then(function(d){
+      if(!d||!d.ok||!d.series)return;var bc=basketPath(d.series);if(!bc)return;
+      LIVE.bc=bc;LIVE.btc=d.series.bitcoin||null;LIVE.eth=d.series.ethereum||null;LIVE.ready=true;
+      LIVE.baseIndex=NAV_BASE*bc[bc.length-1];
+      if(!LIVE.mode){state.navPrev=LIVE.baseIndex;state.nav=LIVE.baseIndex;}
+      if(!document.querySelector('section[data-view="time"]').hidden)drawTime();
+      refreshTakeaway();render();
+    }).catch(function(){});
+  }
+  function loadPrices(){
+    fetch("/api/prices").then(function(r){return r.json();}).then(function(d){
+      if(!d||!d.ok||!d.prices)return;var tw=0,acc=0;
+      for(var c in BW){var p=d.prices[c];if(p&&typeof p.usd_24h_change==="number"){acc+=BW[c]*p.usd_24h_change;tw+=BW[c];}}
+      LIVE.dayChg=tw?acc/tw:0;LIVE.mode=true;
+      var base=LIVE.ready?LIVE.baseIndex:state.nav;
+      state.navPrev=base;state.nav=Math.max(0.2,base*(1+LIVE.dayChg/100));render();
+    }).catch(function(){});
+  }
+
+  // ---- mascot ----
+  var quips=["Welcome to the sandbox. No real money — just vibes and volatility. 🐂",
+    "Remember: this is a toy. The real thing needs lawyers. Lots of lawyers.",
+    "Defensive investing: the art of losing less so you can brag later.",
+    "Diamond hands are built in test environments first.",
+    "NAV = what the basket is worth. Not what Twitter says it's worth."];
+  var BULLIMG='<img src="/bull-logo.png" class="bullimg" alt="">';
+  function say(msg,face){document.getElementById("mSay").innerHTML=msg;var f=document.getElementById("mFace");if(!f)return;if(face&&face!=="🐂"){f.textContent=face;}else{f.innerHTML=BULLIMG;}}
+  say("<b>Hi, I'm the BC25 bull.</b> "+quips[0]);
+
+  // ---- badges ----
+  var BADGES=[["first_mint","🪙","First mint"],["whale","🐳","Whale ($5k+)"],["diamond","💎","Diamond hands"],
+    ["generous","🤝","Sent BC25"],["trader","🔁","Used the DEX"],["time_traveler","🕰️","Time traveler"],["bear_slayer","🐻","Bear survivor"]];
+  function award(id){if(state.badges[id])return;state.badges[id]=1;save();renderBadges();toast("🏅 Achievement: "+(BADGES.filter(function(b){return b[0]==id;})[0]||["","",id])[2]);}
+  function renderBadges(){document.getElementById("badges").innerHTML=BADGES.map(function(b){
+    var got=state.badges[b[0]];return '<span class="badge'+(got?'':' locked')+'"><span class="e">'+b[1]+'</span>'+b[2]+'</span>';}).join("");}
+
+  // ---- toast ----
+  var tEl=document.getElementById("toast"),tT;
+  function toast(m){tEl.textContent=m;tEl.classList.add("show");clearTimeout(tT);tT=setTimeout(function(){tEl.classList.remove("show");},2200);}
+
+  // ---- tabs ----
+  var VIEWS=[["dashboard","Dashboard"],["invest","Mint / Redeem"],["swap","Swap / Send"],["time","🕰️ Time Machine"],["bear","🐻 Survive the Bear"],["stake","Stake"]];
+  var tabsEl=document.getElementById("tabs");
+  tabsEl.innerHTML=VIEWS.map(function(v,i){return '<button class="tab'+(i===0?' active':'')+'" data-t="'+v[0]+'">'+v[1]+'</button>';}).join("");
+  function show(view){
+    document.querySelectorAll('section[data-view]').forEach(function(s){s.hidden=s.getAttribute('data-view')!==view;});
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.getAttribute('data-t')===view);});
+    if(view==="time")drawTime();
+    if(view==="bear")drawBear(0);
+  }
+  tabsEl.addEventListener('click',function(e){var b=e.target.closest('.tab');if(b)show(b.getAttribute('data-t'));});
+
+  // ---- basket (illustrative) ----
+  var BASKET=[["Bitcoin","BTC",9,"#f7931a"],["Ethereum","ETH",8,"#627eea"],["Solana","SOL",8,"#14f195"],
+    ["Rotating alts","12 coins",32,"#9a7420"],["Stablecoins","USDC/USDT/DAI",17,"#37b26b"],["Gold","PAXG",5,"#d9b24a"]];
+  function renderBasket(){
+    var tot=BASKET.reduce(function(a,b){return a+b[2];},0);
+    document.getElementById("basket").innerHTML=BASKET.map(function(b){
+      var pct=Math.round(b[2]/tot*1000)/10;
+      return '<div style="display:flex;align-items:center;gap:10px;margin:7px 0">'+
+        '<div style="width:9px;height:9px;border-radius:50%;background:'+b[3]+';flex:none"></div>'+
+        '<div style="flex:1;min-width:0"><div style="font-weight:600">'+b[0]+' <span class="muted sm">'+b[1]+'</span></div>'+
+        '<div class="bearbar" style="margin-top:3px"><span style="width:'+pct*2.2+'%;background:'+b[3]+'"></span></div></div>'+
+        '<div class="mono sm" style="width:46px;text-align:right">'+pct+'%</div></div>';
+    }).join("");
+  }
+
+  // ---- render dashboard ----
+  function pv(){return state.usdc+state.shares*state.nav;}
+  function render(){
+    document.getElementById("sUsdc").textContent=fmt(state.usdc)+" ";
+    document.getElementById("sShares").textContent=fmt(state.shares,4);
+    document.getElementById("sNav").textContent=usd(state.nav);
+    document.getElementById("sBcVal").textContent=usd(state.shares*state.nav);
+    document.getElementById("pv").textContent=usd(pv());
+    var chg=state.nav-state.navPrev, pctc=state.navPrev?chg/state.navPrev*100:0;
+    document.getElementById("sNavChg").innerHTML=(chg>=0?'<span class="up">▲ ':'<span class="down">▼ ')+fmt(Math.abs(pctc),2)+'%</span> today'+(LIVE.mode?' <span class="muted">· live data</span>':' <span class="muted">· demo data</span>');
+    var plv=pv()-START_USDC;
+    var plTxt=(plv>=0?'+':'-')+'$'+fmt(Math.abs(plv),2);
+    document.getElementById("pvpl").innerHTML='<span class="'+(plv>=0?'up':'down')+'">'+plTxt+' vs start</span>';
+    save();
+  }
+
+  // ---- NAV live-ish tick ----
+  setInterval(function(){
+    state.navPrev=state.navPrev||state.nav;
+    var drift=(Math.random()-0.48)*0.0016;
+    state.nav=Math.max(0.2,state.nav*(1+drift));
+    document.getElementById("sNav").textContent=usd(state.nav);
+    document.getElementById("sBcVal").textContent=usd(state.shares*state.nav);
+    document.getElementById("pv").textContent=usd(pv());
+    updateQuotes();
+  },3000);
+
+  // ---- quotes ----
+  function updateQuotes(){
+    var m=parseFloat(document.getElementById("mintAmt").value)||0;
+    var mf=m*0.01, mnet=m-mf, msh=state.nav?mnet/state.nav:0;
+    document.getElementById("mintQuote").innerHTML=
+      '<div class="ln"><span>Entry fee (1%)</span><b class="mono">'+usd(mf)+'</b></div>'+
+      '<div class="ln"><span>Invested</span><b class="mono">'+usd(mnet)+'</b></div>'+
+      '<div class="ln"><span>BC25 received</span><b class="mono">'+fmt(msh,4)+'</b></div>';
+    var r=parseFloat(document.getElementById("redAmt").value)||0;
+    var rg=r*state.nav, rf=rg*0.02, rnet=rg-rf;
+    document.getElementById("redQuote").innerHTML=
+      '<div class="ln"><span>Gross value</span><b class="mono">'+usd(rg)+'</b></div>'+
+      '<div class="ln"><span>Exit fee (2%)</span><b class="mono">'+usd(rf)+'</b></div>'+
+      '<div class="ln"><span>You receive</span><b class="mono">'+usd(rnet)+'</b></div>';
+    var s=parseFloat(document.getElementById("swapAmt").value)||0;
+    var mkt=state.nav*1.004, ssh=mkt?s/mkt:0; // tiny premium, no protocol fee
+    document.getElementById("swapQuote").innerHTML=
+      '<div class="ln"><span>DEX price</span><b class="mono">'+usd(mkt)+'</b></div>'+
+      '<div class="ln"><span>Protocol fee</span><b class="mono">$0.00</b></div>'+
+      '<div class="ln"><span>BC25 received</span><b class="mono">'+fmt(ssh,4)+'</b></div>';
+  }
+  ["mintAmt","redAmt","swapAmt"].forEach(function(id){document.getElementById(id).addEventListener("input",updateQuotes);});
+
+  // ---- actions ----
+  document.getElementById("mintBtn").addEventListener("click",function(){
+    var m=parseFloat(document.getElementById("mintAmt").value)||0;
+    if(m<=0)return toast("Enter an amount");
+    if(m>state.usdc)return toast("Not enough test USDC");
+    var net=m*0.99;state.usdc-=m;state.shares+=net/state.nav;render();
+    toast("Minted "+fmt(net/state.nav,4)+" BC25");award("first_mint");if(m>=5000)award("whale");
+    say("Nice. You now hold a slice of the whole basket — not just one coin. 🐂","🐂");
+  });
+  document.getElementById("redBtn").addEventListener("click",function(){
+    var r=parseFloat(document.getElementById("redAmt").value)||0;
+    if(r<=0)return toast("Enter an amount");
+    if(r>state.shares)return toast("You don't hold that many BC25");
+    var net=r*state.nav*0.98;state.shares-=r;state.usdc+=net;render();
+    toast("Redeemed for "+usd(net));
+    if(state.shares<=0.0001){say("Paper hands detected. 😅 (Totally fine — it's a sandbox.)","😅");}
+  });
+  document.getElementById("swapBtn").addEventListener("click",function(){
+    var s=parseFloat(document.getElementById("swapAmt").value)||0;
+    if(s<=0)return toast("Enter an amount");
+    if(s>state.usdc)return toast("Not enough test USDC");
+    var mkt=state.nav*1.004;state.usdc-=s;state.shares+=s/mkt;render();
+    toast("Bought "+fmt(s/mkt,4)+" BC25 on the DEX");award("trader");
+    say("That's the secondary market — no protocol fee, just a tiny spread. 🐂","🐂");
+  });
+  document.getElementById("sendBtn").addEventListener("click",function(){
+    var a=parseFloat(document.getElementById("sendAmt").value)||0,to=document.getElementById("sendTo").value||"a friend";
+    if(a<=0)return toast("Enter an amount");
+    if(a>state.shares)return toast("Not enough BC25");
+    state.shares-=a;render();toast("Sent "+fmt(a,4)+" BC25 to "+to);award("generous");
+    say("Generosity logged. The token moves freely — that's why it can trade on exchanges. 🐂","🐂");
+  });
+
+  // ---- time machine ----
+  // illustrative monthly index values (12 mo): a bull run then a correction where BC25 preserves.
+  var BTC_S=[100,112,128,120,145,160,150,172,158,120,108,132,141];
+  var ETH_S=[100,115,132,122,150,168,154,180,160,112,100,128,138];
+  var BC_S =[100,108,118,114,130,140,136,150,146,128,124,136,142]; // smoother, loses far less in the dip
+  function slice(arr,mo){var s=arr.slice(arr.length-1-mo);var b=s[0];return s.map(function(v){return v/b;});}
+  function drawTime(){
+    var amt=parseFloat(document.getElementById("tmAmt").value),mo=parseInt(document.getElementById("tmMo").value);
+    document.getElementById("tmAmtL").textContent="$"+fmt(amt,0);
+    document.getElementById("tmMoL").textContent=mo+" month"+(mo>1?"s":"");
+    var bc,btc,eth;
+    if(LIVE.ready&&LIVE.btc&&LIVE.eth){bc=sliceLive(LIVE.bc,mo);btc=sliceLive(LIVE.btc,mo);eth=sliceLive(LIVE.eth,mo);}
+    else{bc=slice(BC_S,mo);btc=slice(BTC_S,mo);eth=slice(ETH_S,mo);}
+    var c=document.getElementById("tmChart"),x=c.getContext("2d"),W=c.width,H=c.height,P=28;
+    x.clearRect(0,0,W,H);
+    var all=bc.concat(btc,eth),mn=Math.min.apply(null,all),mx=Math.max.apply(null,all);
+    var cs=getComputedStyle(document.documentElement);
+    var line=cs.getPropertyValue('--line'),mut=cs.getPropertyValue('--muted');
+    function X(i,L){return P+(W-2*P)*i/(L-1);}function Y(v){return H-P-(H-2*P)*(v-mn)/(mx-mn||1);}
+    x.strokeStyle=line;x.lineWidth=1;[0,.5,1].forEach(function(f){var y=P+(H-2*P)*f;x.beginPath();x.moveTo(P,y);x.lineTo(W-P,y);x.stroke();});
+    function plot(s,col,w){x.strokeStyle=col;x.lineWidth=w;x.beginPath();s.forEach(function(v,i){var px=X(i,s.length),py=Y(v);i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();}
+    plot(btc,"#f7931a",2);plot(eth,"#627eea",2);plot(bc,cs.getPropertyValue('--gold'),3.2);
+    x.fillStyle=mut;x.font="11px monospace";x.fillText("x"+fmt(mx,2),4,P+4);x.fillText("x"+fmt(mn,2),4,H-P+4);
+    var fb=bc[bc.length-1],fbtc=btc[btc.length-1],feth=eth[eth.length-1];
+    document.getElementById("tmResults").innerHTML=
+      tileR("BC25 today",amt*fb,fb)+tileR("If BTC only",amt*fbtc,fbtc)+tileR("If ETH only",amt*feth,feth);
+  }
+  function tileR(k,val,mult){var pl=(mult-1)*100;return '<div class="stat"><div class="k">'+k+'</div><div class="v tnum">'+usd(val)+'</div><div class="sm '+(pl>=0?'up':'down')+'">'+(pl>=0?'+':'')+fmt(pl,1)+'%</div></div>';}
+  function refreshTakeaway(){
+    var mo=parseInt(document.getElementById("tmMo").value);
+    var bc,btc;
+    if(LIVE.ready&&LIVE.btc){bc=sliceLive(LIVE.bc,mo);btc=sliceLive(LIVE.btc,mo);}
+    else{bc=slice(BC_S,mo);btc=slice(BTC_S,mo);}
+    var fb=bc[bc.length-1],fbtc=btc[btc.length-1];
+    var msg = fb>=fbtc
+      ? "Over this window BC25's defensive tilt held up better than BTC — that's the whole point: <b>lose less on the way down.</b>"
+      : "BC25 gave up a little upside here — the trade-off for shifting defensive and cushioning the drawdowns.";
+    document.getElementById("tmTakeaway").innerHTML=msg+" <span class='muted'>(Illustrative; live site uses real history.)</span>";
+  }
+  ["tmAmt","tmMo"].forEach(function(id){document.getElementById(id).addEventListener("input",function(){drawTime();refreshTakeaway();award("time_traveler");});});
+
+  // ---- survive the bear ----
+  var defensive=false,bearSeries=[];
+  document.getElementById("defBtn").addEventListener("click",function(){
+    defensive=!defensive;this.textContent="🛡️ Defensive: "+(defensive?"ON":"OFF");
+    document.getElementById("defNote").textContent=defensive?"Engine shifted to stables + gold":"Risk-on (fully exposed)";
+    say(defensive?"Shields up. Now we lose less when it dumps. 🛡️":"Living dangerously. Bold. 🐂",defensive?"🛡️":"🐂");
+  });
+  function drawBear(progress){
+    var c=document.getElementById("bearChart"),x=c.getContext("2d"),W=c.width,H=c.height,P=26;
+    x.clearRect(0,0,W,H);var cs=getComputedStyle(document.documentElement);
+    x.strokeStyle=cs.getPropertyValue('--line');x.lineWidth=1;x.beginPath();x.moveTo(P,H-P);x.lineTo(W-P,H-P);x.stroke();
+    var n=40,btc=[],bc=[];
+    for(var i=0;i<=n;i++){var t=i/n;
+      btc.push(1-0.45*t + 0.03*Math.sin(i)); // BTC crashes ~45%
+      var dd=defensive?0.15:0.40;           // BC25 drawdown depends on defense
+      bc.push(1-dd*t + 0.02*Math.sin(i));}
+    var lim=Math.max(2,Math.floor((n)*progress));
+    function Y(v){return P+(H-2*P)*(1-(v-0.5)/0.6);}function X(i){return P+(W-2*P)*i/n;}
+    function plot(s,col,w){x.strokeStyle=col;x.lineWidth=w;x.beginPath();for(var i=0;i<=lim;i++){var px=X(i),py=Y(s[i]);i?x.lineTo(px,py):x.moveTo(px,py);}x.stroke();}
+    plot(btc,"#f7931a",2);plot(bc,cs.getPropertyValue('--gold'),3.2);
+    bearSeries=[btc[lim]||btc[0],bc[lim]||bc[0]];
+    document.getElementById("bBtc").textContent=fmt((bearSeries[0]-1)*100,1)+"%";
+    var bcEl=document.getElementById("bBc");bcEl.textContent=fmt((bearSeries[1]-1)*100,1)+"%";
+    bcEl.className="v tnum "+((bearSeries[1]>=bearSeries[0])?"up":"down");
+  }
+  document.getElementById("bearBtn").addEventListener("click",function(){
+    var p=0,self=this;self.disabled=true;document.getElementById("bearResult").hidden=true;
+    say("Here it comes… 😬","😬");
+    var iv=setInterval(function(){p+=0.06;drawBear(Math.min(1,p));if(p>=1){clearInterval(iv);self.disabled=false;
+      var btcLoss=(1-bearSeries[0])*100,bcLoss=(1-bearSeries[1])*100,saved=btcLoss-bcLoss;
+      var r=document.getElementById("bearResult");r.hidden=false;
+      r.innerHTML= defensive
+        ? "🛡️ With defensive mode on, BC25 fell <b>"+fmt(bcLoss,0)+"%</b> vs BTC's <b>"+fmt(btcLoss,0)+"%</b> — you preserved about <b>"+fmt(saved,0)+" points</b> more capital. That's the thesis."
+        : "No defense: BC25 tracked the crash more closely (<b>"+fmt(bcLoss,0)+"%</b>). Try again with 🛡️ Defensive ON to see the difference.";
+      if(defensive)award("bear_slayer");
+      say(defensive?"That's how you live to buy the next cycle. 🐂💪":"Ouch. Flip the shield on and rerun. 🐻","🐂");
+    }},90);
+  });
+
+  // ---- email signup (live: POST /api/signup, graceful) ----
+  function postSignup(email,noteEl,okMsg){
+    if(!email||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){toast("Enter a valid email");return;}
+    if(noteEl)noteEl.textContent="Saving…";
+    fetch("/api/signup",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email:email})})
+      .then(function(r){return r.json();}).catch(function(){return {ok:true};})
+      .then(function(){state.joined=true;save();if(noteEl)noteEl.textContent=okMsg;toast("🎉 You're on the list");say("You'll be first to know. 🐂","🐂");});
+  }
+  var joinBtn=document.getElementById("joinBtn");
+  if(joinBtn)joinBtn.addEventListener("click",function(){
+    postSignup(document.getElementById("joinEmail").value.trim(),document.getElementById("joinNote"),"🎉 You're on the list — thanks for being early.");
+  });
+  document.getElementById("waitBtn").addEventListener("click",function(){
+    postSignup(document.getElementById("waitEmail").value.trim(),document.getElementById("waitNote"),"🎉 You're on the staking waitlist — we'll email you when it's live.");
+  });
+
+  // ---- theme + reset ----
+  document.getElementById("themeBtn").addEventListener("click",function(){
+    var r=document.documentElement,cur=r.getAttribute("data-theme");
+    var dark=cur?cur==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+    r.setAttribute("data-theme",dark?"light":"dark");
+    if(!document.querySelector('section[data-view="time"]').hidden)drawTime();
+  });
+  document.getElementById("resetBtn").addEventListener("click",function(){
+    state=fresh();save();render();renderBadges();toast("Sandbox reset");say("Fresh start. "+quips[Math.floor(Math.random()*quips.length)],"🐂");
+  });
+
+  // ---- init ----
+  renderBasket();renderBadges();render();updateQuotes();refreshTakeaway();
+  loadHistory();loadPrices();setInterval(loadPrices,60000);
+  setTimeout(function(){say("<b>Hi, I'm the BC25 bull.</b> Try the 🕰️ Time Machine or 🐻 Survive the Bear — they explain the whole idea in 30 seconds. "+"");},400);
+})();
+</script>
