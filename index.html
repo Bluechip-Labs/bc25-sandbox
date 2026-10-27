@@ -312,7 +312,7 @@
     document.querySelectorAll('section[data-view]').forEach(function(s){s.hidden=s.getAttribute('data-view')!==view;});
     document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.getAttribute('data-t')===view);});
     if(view==="time")drawTime();
-    if(view==="bear")drawBear(0);
+    if(view==="bear"){bearPlaying=false;document.getElementById("bearResult").hidden=true;drawBear(0);}
   }
   tabsEl.addEventListener('click',function(e){var b=e.target.closest('.tab');if(b)show(b.getAttribute('data-t'));});
 
@@ -488,7 +488,7 @@
   ["tmAmt","tmMo"].forEach(function(id){document.getElementById(id).addEventListener("input",function(){drawTime();refreshTakeaway();award("time_traveler");});});
 
   // ---- survive the bear (real Stage B worst drawdown) ----
-  var defensive=false,bearSeries=[],bearWin=null;
+  var defensive=false,bearSeries=[],bearWin=null,bearPlaying=false;
   function buildBearWin(){
     if(!STAGEB||!STAGEB.series)return null;
     var btc=STAGEB.series.btc,idx=STAGEB.series.index,date=STAGEB.series.date;
@@ -506,8 +506,8 @@
   document.getElementById("defBtn").addEventListener("click",function(){
     defensive=!defensive;this.textContent="🛡️ Defensive mode: "+(defensive?"ON":"OFF");
     document.getElementById("defNote").textContent=defensive?"You're holding BC25 (defense built in)":"You're holding plain BTC (fully exposed)";
-    say(defensive?"Good call. Shields are built in. 🛡️":"Pure BTC, no cushion. Bold. 🐂",defensive?"🛡️":"🐂");
-    drawBear(1);
+    say(defensive?"Shields up. Hit ▶ Replay to see how BC25 held. 🛡️":"Pure BTC, no cushion. Bold. 🐂",defensive?"🛡️":"🐂");
+    bearPlaying=false;document.getElementById("bearResult").hidden=true;drawBear(0);
   });
   function drawBear(progress){
     var c=document.getElementById("bearChart"),x=c.getContext("2d"),W=c.width,H=c.height,P=26;
@@ -516,20 +516,22 @@
     if(bearWin){btc=bearWin.btc;bc=bearWin.bc;}
     else{btc=[];bc=[];for(var i=0;i<=40;i++){var t=i/40;btc.push(1-0.45*t+0.03*Math.sin(i));bc.push(1-0.18*t+0.02*Math.sin(i));}}
     var n=btc.length-1,lim=Math.max(1,Math.floor(n*progress));
-    // Defensive OFF: show BTC only (BC25 stays hidden until the reveal). ON: show both.
-    var all=defensive?btc.concat(bc):btc,mn=Math.min.apply(null,all),mx=Math.max.apply(null,all),pad=(mx-mn)*0.1||0.05;
+    // BC25 stays hidden until Defensive is ON *and* a replay has started — the reveal happens by playing.
+    var showBC=defensive&&bearPlaying;
+    var all=showBC?btc.concat(bc):btc,mn=Math.min.apply(null,all),mx=Math.max.apply(null,all),pad=(mx-mn)*0.1||0.05;
     function Y(v){return P+(H-2*P)*(1-(v-(mn-pad))/((mx+pad)-(mn-pad)));}function X(i){return P+(W-2*P)*i/n;}
     x.strokeStyle=cs.getPropertyValue('--line');x.lineWidth=1;x.beginPath();x.moveTo(P,Y(1));x.lineTo(W-P,Y(1));x.stroke();
     function plot(s,col,w){x.strokeStyle=col;x.lineWidth=w;x.beginPath();for(var i=0;i<=lim;i++){var px=X(i),py=Y(s[i]);i?x.lineTo(px,py):x.moveTo(px,py);}x.stroke();}
-    plot(btc,"#f7931a",defensive?2:3.4);if(defensive)plot(bc,cs.getPropertyValue('--gold'),3.4);
+    plot(btc,"#f7931a",showBC?2:3.4);if(showBC)plot(bc,cs.getPropertyValue('--gold'),3.4);
     bearSeries=[btc[lim]||btc[0],bc[lim]||bc[0]];
     var bEl=document.getElementById("bBtc");bEl.textContent=fmt((bearSeries[0]-1)*100,1)+"%";bEl.className="v tnum down";
     var bcEl=document.getElementById("bBc");
-    if(defensive){bcEl.textContent=fmt((bearSeries[1]-1)*100,1)+"%";bcEl.className="v tnum "+((bearSeries[1]>=bearSeries[0])?"up":"down");}
-    else{bcEl.textContent="🛡️ ?";bcEl.className="v tnum muted";}
+    if(showBC){bcEl.textContent=fmt((bearSeries[1]-1)*100,1)+"%";bcEl.className="v tnum "+((bearSeries[1]>=bearSeries[0])?"up":"down");}
+    else{bcEl.textContent=defensive?"🛡️ ▶ replay":"🛡️ ?";bcEl.className="v tnum muted";}
   }
   document.getElementById("bearBtn").addEventListener("click",function(){
     var p=0,self=this;self.disabled=true;document.getElementById("bearResult").hidden=true;
+    bearPlaying=true;
     say("Here it comes… 😬","😬");
     var iv=setInterval(function(){p+=0.06;drawBear(Math.min(1,p));if(p>=1){clearInterval(iv);self.disabled=false;
       var btcLoss=(1-bearSeries[0])*100,bcLoss=(1-bearSeries[1])*100,saved=btcLoss-bcLoss;
