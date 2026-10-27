@@ -204,17 +204,17 @@
   <section data-view="bear" hidden>
     <div class="card">
       <h2>🐻 Survive the Bear</h2>
-      <p class="muted sm">A crash is coming. BC25's defensive engine shifts toward stablecoins + gold to "lose less on the way down." Flip the switch and see how much you preserve vs plain BTC.</p>
+      <p class="muted sm">This is the <b>real bear market BC25 weathered in Stage B testing</b> — BTC fell almost 50%. Pick what you'd have held and replay it to see how BC25's defensive engine held up. <span id="bearWinLbl"></span></p>
       <div style="display:flex;align-items:center;gap:12px;margin:12px 0">
-        <button class="btn sm" id="defBtn">🛡️ Defensive: OFF</button>
-        <span class="muted sm" id="defNote">Risk-on (fully exposed)</span>
+        <button class="btn sm" id="defBtn">🛡️ Defensive mode: OFF</button>
+        <span class="muted sm" id="defNote">You're holding plain BTC (fully exposed)</span>
       </div>
       <canvas id="bearChart" width="640" height="220"></canvas>
       <div class="grid2" style="margin-top:12px">
         <div class="stat"><div class="k">Plain BTC</div><div class="v tnum down" id="bBtc">—</div></div>
-        <div class="stat"><div class="k">Your BC25</div><div class="v tnum" id="bBc">—</div></div>
+        <div class="stat"><div class="k">BC25 (defended)</div><div class="v tnum" id="bBc">—</div></div>
       </div>
-      <button class="btn" id="bearBtn" style="margin-top:12px">▶ Run the crash</button>
+      <button class="btn" id="bearBtn" style="margin-top:12px">▶ Replay the bear</button>
       <div class="disc" id="bearResult" hidden></div>
     </div>
   </section>
@@ -266,8 +266,10 @@
       STAGEB=d;var idx=d.series.index,n=idx.length;
       // headline NAV reflects the real latest Stage B level ($1.00 = 100 at inception)
       state.nav=idx[n-1]/100;state.navPrev=(n>1?idx[n-2]:idx[n-1])/100;
+      bearWin=buildBearWin();bearLabel();
       renderBasket();render();updateQuotes();refreshTakeaway();
       if(!document.querySelector('section[data-view="time"]').hidden)drawTime();
+      if(!document.querySelector('section[data-view="bear"]').hidden)drawBear(1);
     }).catch(function(){});
   }
 
@@ -444,28 +446,42 @@
   }
   ["tmAmt","tmMo"].forEach(function(id){document.getElementById(id).addEventListener("input",function(){drawTime();refreshTakeaway();award("time_traveler");});});
 
-  // ---- survive the bear ----
-  var defensive=false,bearSeries=[];
+  // ---- survive the bear (real Stage B worst drawdown) ----
+  var defensive=false,bearSeries=[],bearWin=null;
+  function buildBearWin(){
+    if(!STAGEB||!STAGEB.series)return null;
+    var btc=STAGEB.series.btc,idx=STAGEB.series.index,date=STAGEB.series.date;
+    var peak=0,bestDD=0,bi=0,bj=0;                 // BTC peak->trough max drawdown
+    for(var i=0;i<btc.length;i++){if(btc[i]>btc[peak])peak=i;var dd=(btc[i]-btc[peak])/btc[peak];if(dd<bestDD){bestDD=dd;bi=peak;bj=i;}}
+    if(bj-bi<5)return null;
+    var b0=btc[bi],i0=idx[bi],bb=[],cc=[];
+    for(var k=bi;k<=bj;k++){bb.push(btc[k]/b0);cc.push(idx[k]/i0);}
+    return {from:date[bi],to:date[bj],days:bj-bi,btc:bb,bc:cc};
+  }
+  function bearLabel(){
+    var el=document.getElementById("bearWinLbl");if(!el)return;
+    el.innerHTML=bearWin?"<b class='muted'>Real window: "+bearWin.from+" → "+bearWin.to+" ("+bearWin.days+" days).</b>":"";
+  }
   document.getElementById("defBtn").addEventListener("click",function(){
-    defensive=!defensive;this.textContent="🛡️ Defensive: "+(defensive?"ON":"OFF");
-    document.getElementById("defNote").textContent=defensive?"Engine shifted to stables + gold":"Risk-on (fully exposed)";
-    say(defensive?"Shields up. Now we lose less when it dumps. 🛡️":"Living dangerously. Bold. 🐂",defensive?"🛡️":"🐂");
+    defensive=!defensive;this.textContent="🛡️ Defensive mode: "+(defensive?"ON":"OFF");
+    document.getElementById("defNote").textContent=defensive?"You're holding BC25 (defense built in)":"You're holding plain BTC (fully exposed)";
+    say(defensive?"Good call. Shields are built in. 🛡️":"Pure BTC, no cushion. Bold. 🐂",defensive?"🛡️":"🐂");
+    drawBear(1);
   });
   function drawBear(progress){
     var c=document.getElementById("bearChart"),x=c.getContext("2d"),W=c.width,H=c.height,P=26;
     x.clearRect(0,0,W,H);var cs=getComputedStyle(document.documentElement);
-    x.strokeStyle=cs.getPropertyValue('--line');x.lineWidth=1;x.beginPath();x.moveTo(P,H-P);x.lineTo(W-P,H-P);x.stroke();
-    var n=40,btc=[],bc=[];
-    for(var i=0;i<=n;i++){var t=i/n;
-      btc.push(1-0.45*t + 0.03*Math.sin(i)); // BTC crashes ~45%
-      var dd=defensive?0.15:0.40;           // BC25 drawdown depends on defense
-      bc.push(1-dd*t + 0.02*Math.sin(i));}
-    var lim=Math.max(2,Math.floor((n)*progress));
-    function Y(v){return P+(H-2*P)*(1-(v-0.5)/0.6);}function X(i){return P+(W-2*P)*i/n;}
+    var btc,bc;
+    if(bearWin){btc=bearWin.btc;bc=bearWin.bc;}
+    else{btc=[];bc=[];for(var i=0;i<=40;i++){var t=i/40;btc.push(1-0.45*t+0.03*Math.sin(i));bc.push(1-0.18*t+0.02*Math.sin(i));}}
+    var n=btc.length-1,lim=Math.max(1,Math.floor(n*progress));
+    var all=btc.concat(bc),mn=Math.min.apply(null,all),mx=Math.max.apply(null,all),pad=(mx-mn)*0.1||0.05;
+    function Y(v){return P+(H-2*P)*(1-(v-(mn-pad))/((mx+pad)-(mn-pad)));}function X(i){return P+(W-2*P)*i/n;}
+    x.strokeStyle=cs.getPropertyValue('--line');x.lineWidth=1;x.beginPath();x.moveTo(P,Y(1));x.lineTo(W-P,Y(1));x.stroke();
     function plot(s,col,w){x.strokeStyle=col;x.lineWidth=w;x.beginPath();for(var i=0;i<=lim;i++){var px=X(i),py=Y(s[i]);i?x.lineTo(px,py):x.moveTo(px,py);}x.stroke();}
-    plot(btc,"#f7931a",2);plot(bc,cs.getPropertyValue('--gold'),3.2);
+    plot(btc,"#f7931a",defensive?2:3.4);plot(bc,cs.getPropertyValue('--gold'),defensive?3.4:2);
     bearSeries=[btc[lim]||btc[0],bc[lim]||bc[0]];
-    document.getElementById("bBtc").textContent=fmt((bearSeries[0]-1)*100,1)+"%";
+    var bEl=document.getElementById("bBtc");bEl.textContent=fmt((bearSeries[0]-1)*100,1)+"%";bEl.className="v tnum down";
     var bcEl=document.getElementById("bBc");bcEl.textContent=fmt((bearSeries[1]-1)*100,1)+"%";
     bcEl.className="v tnum "+((bearSeries[1]>=bearSeries[0])?"up":"down");
   }
@@ -474,10 +490,11 @@
     say("Here it comes… 😬","😬");
     var iv=setInterval(function(){p+=0.06;drawBear(Math.min(1,p));if(p>=1){clearInterval(iv);self.disabled=false;
       var btcLoss=(1-bearSeries[0])*100,bcLoss=(1-bearSeries[1])*100,saved=btcLoss-bcLoss;
+      var win=bearWin?" over the real Stage B bear ("+bearWin.from+" → "+bearWin.to+")":"";
       var r=document.getElementById("bearResult");r.hidden=false;
       r.innerHTML= defensive
-        ? "🛡️ With defensive mode on, BC25 fell <b>"+fmt(bcLoss,0)+"%</b> vs BTC's <b>"+fmt(btcLoss,0)+"%</b> — you preserved about <b>"+fmt(saved,0)+" points</b> more capital. That's the thesis."
-        : "No defense: BC25 tracked the crash more closely (<b>"+fmt(bcLoss,0)+"%</b>). Try again with 🛡️ Defensive ON to see the difference.";
+        ? "🛡️ You held BC25"+win+": it fell <b>"+fmt(bcLoss,0)+"%</b> while BTC fell <b>"+fmt(btcLoss,0)+"%</b> — about <b>"+fmt(saved,0)+" points</b> of capital preserved. BC25 still dropped (it's not a hedge), but it <b>lost a lot less on the way down.</b>"
+        : "You rode plain BTC down <b>"+fmt(btcLoss,0)+"%</b>"+win+". BC25 fell only <b>"+fmt(bcLoss,0)+"%</b> over the same stretch. Flip 🛡️ Defensive ON and replay to feel the difference.";
       if(defensive)award("bear_slayer");
       say(defensive?"That's how you live to buy the next cycle. 🐂💪":"Ouch. Flip the shield on and rerun. 🐻","🐂");
     }},90);
