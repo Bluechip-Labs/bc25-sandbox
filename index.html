@@ -136,7 +136,7 @@
       <p class="sm muted" id="joinNote" style="margin-top:8px">No spam. This is not an offer, and not a promise of any reward, token, airdrop, or financial return.</p>
     </div>
     <div class="card" style="margin-top:14px">
-      <h3>What's inside BC25 <span class="muted sm">(illustrative weights)</span></h3>
+      <h3>What's inside BC25 <span class="muted sm" id="basketNote">(illustrative weights)</span></h3>
       <div id="basket"></div>
     </div>
     <div class="card">
@@ -185,7 +185,7 @@
   <section data-view="time" hidden>
     <div class="card">
       <h2>🕰️ Time Machine</h2>
-      <p class="muted sm">If you had invested in BC25 instead of just holding BTC or ETH… (illustrative history; the real site uses live data.)</p>
+      <p class="muted sm">If you had invested in BC25 instead of just holding BTC, ETH, or SOL… <span id="tmSrc">(real BC25 Stage B paper-test history)</span></p>
       <label class="fld"><span class="lab">Amount invested: <b id="tmAmtL" class="mono">$1,000</b></span><input type="range" id="tmAmt" min="100" max="25000" step="100" value="1000"></label>
       <label class="fld"><span class="lab">How long ago: <b id="tmMoL" class="mono">12 months</b></span><input type="range" id="tmMo" min="1" max="12" step="1" value="12"></label>
       <canvas id="tmChart" width="640" height="240"></canvas>
@@ -193,6 +193,7 @@
         <span><i style="background:var(--gold)"></i>BC25</span>
         <span><i style="background:#f7931a"></i>BTC</span>
         <span><i style="background:#627eea"></i>ETH</span>
+        <span><i style="background:#14f195"></i>SOL</span>
       </div>
       <div class="grid2" style="margin-top:12px" id="tmResults"></div>
       <div class="disc" id="tmTakeaway"></div>
@@ -234,7 +235,7 @@
     </div>
   </section>
 
-  <div class="disc">⚠️ This is a <b>simulation/prototype</b>. No real money, no real tokens, nothing is on-chain. Numbers are illustrative to show how BC25 is intended to work. Not an offer, solicitation, or investment advice.</div>
+  <div class="disc">⚠️ This is a <b>simulation/prototype</b>. No real money, no real tokens, nothing is on-chain — your actions here are simulated. Historical charts use BC25's <b>Stage B paper-test</b> results (hypothetical, no live capital); <b>past performance does not guarantee future results.</b> Not an offer, solicitation, or investment advice.</div>
   <div class="foot">BC25 Defender Index · Bluechip Labs · sandbox prototype</div>
 </div>
 
@@ -256,35 +257,17 @@
   state=load();
 
   // ---- live market data (CoinGecko via /api/*, graceful fallback to demo data) ----
-  var BW={bitcoin:.09,ethereum:.08,solana:.08,ripple:.03,binancecoin:.03,cardano:.03,tron:.03,chainlink:.03,dogecoin:.03,"usd-coin":.057,tether:.057,dai:.057,"pax-gold":.0525};
-  var STABLE={"usd-coin":1,"tether":1,"dai":1};
-  var NAV_BASE=1.00;
-  var LIVE={ready:false,mode:false,bc:null,btc:null,eth:null,dayChg:0,baseIndex:NAV0};
-  function wsum(){var t=0;for(var k in BW)t+=BW[k];return t;}
-  function basketPath(series){
-    var L=Infinity;for(var c in BW){if(STABLE[c])continue;if(!series[c]||!series[c].length)return null;L=Math.min(L,series[c].length);}
-    if(!isFinite(L)||L<2)return null;var tw=wsum(),path=[];
-    for(var i=0;i<L;i++){var v=0;for(var c in BW){var w=BW[c]/tw;v+=STABLE[c]?w:w*(series[c][i]/series[c][0]);}path.push(v);}
-    var b=path[0];return path.map(function(x){return x/b;});
-  }
-  function sliceLive(arr,mo){var n=Math.max(2,Math.round(arr.length*(mo/12)));if(n>arr.length)n=arr.length;var s=arr.slice(arr.length-n);var b=s[0];return s.map(function(v){return v/b;});}
-  function loadHistory(){
-    fetch("/api/history?days=365").then(function(r){return r.json();}).then(function(d){
-      if(!d||!d.ok||!d.series)return;var bc=basketPath(d.series);if(!bc)return;
-      LIVE.bc=bc;LIVE.btc=d.series.bitcoin||null;LIVE.eth=d.series.ethereum||null;LIVE.ready=true;
-      LIVE.baseIndex=NAV_BASE*bc[bc.length-1];
-      if(!LIVE.mode){state.navPrev=LIVE.baseIndex;state.nav=LIVE.baseIndex;}
+  // Real BC25 Stage B paper-test data (series rebased to 100 at inception + latest basket weights).
+  var STAGEB=null;
+  function sliceSeries(arr,mo){var n=Math.max(2,Math.round(arr.length*(mo/12)));if(n>arr.length)n=arr.length;if(n<2)n=2;var s=arr.slice(arr.length-n);var b=s[0];return s.map(function(v){return v/b;});}
+  function loadStageB(){
+    fetch("/stageb.json").then(function(r){return r.json();}).then(function(d){
+      if(!d||!d.series||!d.series.index||!d.series.index.length)return;
+      STAGEB=d;var idx=d.series.index,n=idx.length;
+      // headline NAV reflects the real latest Stage B level ($1.00 = 100 at inception)
+      state.nav=idx[n-1]/100;state.navPrev=(n>1?idx[n-2]:idx[n-1])/100;
+      renderBasket();render();updateQuotes();refreshTakeaway();
       if(!document.querySelector('section[data-view="time"]').hidden)drawTime();
-      refreshTakeaway();render();
-    }).catch(function(){});
-  }
-  function loadPrices(){
-    fetch("/api/prices").then(function(r){return r.json();}).then(function(d){
-      if(!d||!d.ok||!d.prices)return;var tw=0,acc=0;
-      for(var c in BW){var p=d.prices[c];if(p&&typeof p.usd_24h_change==="number"){acc+=BW[c]*p.usd_24h_change;tw+=BW[c];}}
-      LIVE.dayChg=tw?acc/tw:0;LIVE.mode=true;
-      var base=LIVE.ready?LIVE.baseIndex:state.nav;
-      state.navPrev=base;state.nav=Math.max(0.2,base*(1+LIVE.dayChg/100));render();
     }).catch(function(){});
   }
 
@@ -325,8 +308,14 @@
   var BASKET=[["Bitcoin","BTC",9,"#f7931a"],["Ethereum","ETH",8,"#627eea"],["Solana","SOL",8,"#14f195"],
     ["Rotating alts","12 coins",32,"#9a7420"],["Stablecoins","USDC/USDT/DAI",17,"#37b26b"],["Gold","PAXG",5,"#d9b24a"]];
   function renderBasket(){
-    var tot=BASKET.reduce(function(a,b){return a+b[2];},0);
-    document.getElementById("basket").innerHTML=BASKET.map(function(b){
+    var rows;
+    if(STAGEB&&STAGEB.weights&&STAGEB.weights.length){
+      var pal={BTC:"#f7931a",ETH:"#627eea",SOL:"#14f195",PAXG:"#d9b24a",USDT:"#26a17b",USDC:"#2775ca",DAI:"#f5ac37"};
+      rows=STAGEB.weights.map(function(w){return [w.label,"",w.w,pal[w.label]||"#9a7420"];});
+      var wh=document.getElementById("basketNote");if(wh)wh.textContent="(live Stage B weights, as of "+STAGEB.asof+")";
+    } else { rows=BASKET; }
+    var tot=rows.reduce(function(a,b){return a+b[2];},0);
+    document.getElementById("basket").innerHTML=rows.map(function(b){
       var pct=Math.round(b[2]/tot*1000)/10;
       return '<div style="display:flex;align-items:center;gap:10px;margin:7px 0">'+
         '<div style="width:9px;height:9px;border-radius:50%;background:'+b[3]+';flex:none"></div>'+
@@ -345,23 +334,14 @@
     document.getElementById("sBcVal").textContent=usd(state.shares*state.nav);
     document.getElementById("pv").textContent=usd(pv());
     var chg=state.nav-state.navPrev, pctc=state.navPrev?chg/state.navPrev*100:0;
-    document.getElementById("sNavChg").innerHTML=(chg>=0?'<span class="up">▲ ':'<span class="down">▼ ')+fmt(Math.abs(pctc),2)+'%</span> today'+(LIVE.mode?' <span class="muted">· live data</span>':' <span class="muted">· demo data</span>');
+    document.getElementById("sNavChg").innerHTML=(chg>=0?'<span class="up">▲ ':'<span class="down">▼ ')+fmt(Math.abs(pctc),2)+'%</span> latest day'+(STAGEB?' <span class="muted">· Stage B data</span>':' <span class="muted">· demo data</span>');
     var plv=pv()-START_USDC;
     var plTxt=(plv>=0?'+':'-')+'$'+fmt(Math.abs(plv),2);
     document.getElementById("pvpl").innerHTML='<span class="'+(plv>=0?'up':'down')+'">'+plTxt+' vs start</span>';
     save();
   }
 
-  // ---- NAV live-ish tick ----
-  setInterval(function(){
-    state.navPrev=state.navPrev||state.nav;
-    var drift=(Math.random()-0.48)*0.0016;
-    state.nav=Math.max(0.2,state.nav*(1+drift));
-    document.getElementById("sNav").textContent=usd(state.nav);
-    document.getElementById("sBcVal").textContent=usd(state.shares*state.nav);
-    document.getElementById("pv").textContent=usd(pv());
-    updateQuotes();
-  },3000);
+  // NAV is the real Stage B level (static historical snapshot) — no fabricated live drift.
 
   // ---- quotes ----
   function updateQuotes(){
@@ -429,34 +409,38 @@
     var amt=parseFloat(document.getElementById("tmAmt").value),mo=parseInt(document.getElementById("tmMo").value);
     document.getElementById("tmAmtL").textContent="$"+fmt(amt,0);
     document.getElementById("tmMoL").textContent=mo+" month"+(mo>1?"s":"");
-    var bc,btc,eth;
-    if(LIVE.ready&&LIVE.btc&&LIVE.eth){bc=sliceLive(LIVE.bc,mo);btc=sliceLive(LIVE.btc,mo);eth=sliceLive(LIVE.eth,mo);}
+    var bc,btc,eth,sol=null;
+    if(STAGEB){var s=STAGEB.series;bc=sliceSeries(s.index,mo);btc=sliceSeries(s.btc,mo);eth=sliceSeries(s.eth,mo);sol=sliceSeries(s.sol,mo);}
     else{bc=slice(BC_S,mo);btc=slice(BTC_S,mo);eth=slice(ETH_S,mo);}
     var c=document.getElementById("tmChart"),x=c.getContext("2d"),W=c.width,H=c.height,P=28;
     x.clearRect(0,0,W,H);
-    var all=bc.concat(btc,eth),mn=Math.min.apply(null,all),mx=Math.max.apply(null,all);
+    var all=bc.concat(btc,eth,sol||[]),mn=Math.min.apply(null,all),mx=Math.max.apply(null,all);
     var cs=getComputedStyle(document.documentElement);
     var line=cs.getPropertyValue('--line'),mut=cs.getPropertyValue('--muted');
     function X(i,L){return P+(W-2*P)*i/(L-1);}function Y(v){return H-P-(H-2*P)*(v-mn)/(mx-mn||1);}
     x.strokeStyle=line;x.lineWidth=1;[0,.5,1].forEach(function(f){var y=P+(H-2*P)*f;x.beginPath();x.moveTo(P,y);x.lineTo(W-P,y);x.stroke();});
     function plot(s,col,w){x.strokeStyle=col;x.lineWidth=w;x.beginPath();s.forEach(function(v,i){var px=X(i,s.length),py=Y(v);i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();}
-    plot(btc,"#f7931a",2);plot(eth,"#627eea",2);plot(bc,cs.getPropertyValue('--gold'),3.2);
+    plot(btc,"#f7931a",2);plot(eth,"#627eea",2);if(sol)plot(sol,"#14f195",2);plot(bc,cs.getPropertyValue('--gold'),3.2);
     x.fillStyle=mut;x.font="11px monospace";x.fillText("x"+fmt(mx,2),4,P+4);x.fillText("x"+fmt(mn,2),4,H-P+4);
     var fb=bc[bc.length-1],fbtc=btc[btc.length-1],feth=eth[eth.length-1];
-    document.getElementById("tmResults").innerHTML=
-      tileR("BC25 today",amt*fb,fb)+tileR("If BTC only",amt*fbtc,fbtc)+tileR("If ETH only",amt*feth,feth);
+    var html=tileR("BC25",amt*fb,fb)+tileR("If BTC only",amt*fbtc,fbtc)+tileR("If ETH only",amt*feth,feth);
+    if(sol){var fsol=sol[sol.length-1];html+=tileR("If SOL only",amt*fsol,fsol);}
+    document.getElementById("tmResults").innerHTML=html;
   }
   function tileR(k,val,mult){var pl=(mult-1)*100;return '<div class="stat"><div class="k">'+k+'</div><div class="v tnum">'+usd(val)+'</div><div class="sm '+(pl>=0?'up':'down')+'">'+(pl>=0?'+':'')+fmt(pl,1)+'%</div></div>';}
   function refreshTakeaway(){
     var mo=parseInt(document.getElementById("tmMo").value);
     var bc,btc;
-    if(LIVE.ready&&LIVE.btc){bc=sliceLive(LIVE.bc,mo);btc=sliceLive(LIVE.btc,mo);}
+    if(STAGEB){var s=STAGEB.series;bc=sliceSeries(s.index,mo);btc=sliceSeries(s.btc,mo);}
     else{bc=slice(BC_S,mo);btc=slice(BTC_S,mo);}
     var fb=bc[bc.length-1],fbtc=btc[btc.length-1];
     var msg = fb>=fbtc
       ? "Over this window BC25's defensive tilt held up better than BTC — that's the whole point: <b>lose less on the way down.</b>"
       : "BC25 gave up a little upside here — the trade-off for shifting defensive and cushioning the drawdowns.";
-    document.getElementById("tmTakeaway").innerHTML=msg+" <span class='muted'>(Illustrative; live site uses real history.)</span>";
+    var note = STAGEB
+      ? "(Real BC25 Stage B paper-test data, trailing "+STAGEB.days+" days, vs BTC/ETH/SOL.)"
+      : "(Illustrative demo data — live site uses the real Stage B series.)";
+    document.getElementById("tmTakeaway").innerHTML=msg+" <span class='muted'>"+note+"</span>";
   }
   ["tmAmt","tmMo"].forEach(function(id){document.getElementById(id).addEventListener("input",function(){drawTime();refreshTakeaway();award("time_traveler");});});
 
@@ -528,7 +512,7 @@
 
   // ---- init ----
   renderBasket();renderBadges();render();updateQuotes();refreshTakeaway();
-  loadHistory();loadPrices();setInterval(loadPrices,60000);
+  loadStageB();
   setTimeout(function(){say("<b>Hi, I'm the BC25 bull.</b> Try the 🕰️ Time Machine or 🐻 Survive the Bear — they explain the whole idea in 30 seconds. "+"");},400);
 })();
 </script>
