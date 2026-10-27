@@ -9,7 +9,7 @@
 // Until a valid ID is set, this file makes NO network calls (it simply no-ops),
 // so it is safe to ship as-is.
 (function () {
-  var UMAMI_WEBSITE_ID = "PASTE_UMAMI_WEBSITE_ID";
+  var UMAMI_WEBSITE_ID = "a8aa6a4f-ce2e-4d9d-a8d5-d60b156cc6c3";
   // If you self-host Umami, change this to your instance's script URL.
   var UMAMI_SRC = "https://cloud.umami.is/script.js";
 
