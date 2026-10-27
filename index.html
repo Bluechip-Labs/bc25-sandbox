@@ -1,3 +1,6 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BC25 Sandbox</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
@@ -139,6 +142,13 @@
       <h3>What's inside BC25 <span class="muted sm" id="basketNote">(illustrative weights)</span></h3>
       <div id="basket"></div>
     </div>
+    <div class="card" style="margin-top:14px">
+      <h3>When BC25 played defense <span class="muted sm" id="regimeNote"></span></h3>
+      <p class="muted sm">The engine checks the market daily and shifts between offense and defense on its own. Each stripe is one day of Stage B — the gold line is how much sat in stablecoins + gold.</p>
+      <canvas id="regimeChart" width="640" height="104" style="margin-top:8px"></canvas>
+      <div class="legend" id="regimeLegend"></div>
+      <p class="sm muted" id="regimeCap" style="margin-top:8px"></p>
+    </div>
     <div class="card">
       <h3>Achievements</h3>
       <div class="badges" id="badges"></div>
@@ -267,7 +277,7 @@
       // headline NAV reflects the real latest Stage B level ($1.00 = 100 at inception)
       state.nav=idx[n-1]/100;state.navPrev=(n>1?idx[n-2]:idx[n-1])/100;
       bearWin=buildBearWin();bearLabel();
-      renderBasket();render();updateQuotes();refreshTakeaway();
+      renderBasket();drawRegime();render();updateQuotes();refreshTakeaway();
       if(!document.querySelector('section[data-view="time"]').hidden)drawTime();
       if(!document.querySelector('section[data-view="bear"]').hidden)drawBear(1);
     }).catch(function(){});
@@ -325,6 +335,37 @@
         '<div class="bearbar" style="margin-top:3px"><span style="width:'+pct*2.2+'%;background:'+b[3]+'"></span></div></div>'+
         '<div class="mono sm" style="width:46px;text-align:right">'+pct+'%</div></div>';
     }).join("");
+  }
+
+  // ---- regime timeline (real Stage B market states + safety modes + defensive weight) ----
+  var STCOL={neutral:"#7a8699",risk_on:"#37b26b",strong_risk_on:"#1f7a4d",risk_off:"#d9a63a",bear_preservation:"#d9534f",staged_recovery:"#4a90d9"};
+  var MDCOL={normal:"#2a3340",safe:"#d9a63a",degraded:"#e8862e",freeze:"#c0392b",emergency:"#7b241c"};
+  var STLABEL={neutral:"Neutral",risk_on:"Risk-on",strong_risk_on:"Strong risk-on",risk_off:"Risk-off",bear_preservation:"Bear preservation",staged_recovery:"Staged recovery"};
+  function drawRegime(){
+    if(!STAGEB||!STAGEB.regime)return;
+    var R=STAGEB.regime,N=R.state.length;
+    var c=document.getElementById("regimeChart");if(!c)return;var x=c.getContext("2d"),W=c.width,H=c.height;
+    x.clearRect(0,0,W,H);
+    var L=8,Rr=W-8,bandTop=6,bandH=54,modeTop=68,modeH=12,colW=(Rr-L)/N;
+    for(var i=0;i<N;i++){var px=L+colW*i,w=Math.ceil(colW)+1;
+      x.fillStyle=STCOL[R.states[R.state[i]]]||"#7a8699";x.fillRect(px,bandTop,w,bandH);
+      x.fillStyle=MDCOL[R.modes[R.mode[i]]]||"#2a3340";x.fillRect(px,modeTop,w,modeH);}
+    x.strokeStyle="#ecc766";x.lineWidth=2;x.beginPath();
+    for(var j=0;j<N;j++){var cx=L+colW*j+colW/2,py=bandTop+bandH-(R.defw[j]*bandH);j?x.lineTo(cx,py):x.moveTo(cx,py);}x.stroke();
+    var cs=getComputedStyle(document.documentElement),mut=cs.getPropertyValue('--muted');
+    x.fillStyle=mut;x.font="10px monospace";
+    x.fillText(STAGEB.series.date[0],L,H-1);var e=STAGEB.series.date[N-1];x.fillText(e,Rr-x.measureText(e).width,H-1);
+    x.fillText("safety mode",L,modeTop-2);
+    // legend + caption
+    var seen={};R.state.forEach(function(i){seen[R.states[i]]=1;});
+    var lh=Object.keys(seen).map(function(s){return "<span><i style='background:"+(STCOL[s]||"#7a8699")+"'></i>"+(STLABEL[s]||s)+"</span>";}).join("");
+    lh+="<span><i style='background:#ecc766'></i>% in stables + gold</span>";
+    document.getElementById("regimeLegend").innerHTML=lh;
+    var defDays=0;R.state.forEach(function(i){var s=R.states[i];if(s==="bear_preservation"||s==="staged_recovery")defDays++;});
+    var peak=Math.max.apply(null,R.defw),modesSeen={};R.mode.forEach(function(i){modesSeen[R.modes[i]]=1;});
+    var cautious=(modesSeen.safe||modesSeen.degraded||modesSeen.freeze||modesSeen.emergency);
+    document.getElementById("regimeCap").innerHTML="BC25 held a defensive stance (bear preservation / staged recovery) on <b>"+defDays+" of "+N+"</b> days, peaking at <b>"+Math.round(peak*100)+"%</b> of the basket in stablecoins + gold — then rotated back to offense as markets recovered."+(cautious?" The thin lower strip is the safety mode; amber marks the cautious <i>safe/degraded</i> days.":"");
+    var rn=document.getElementById("regimeNote");if(rn)rn.textContent="(Stage B, "+STAGEB.start+" → "+STAGEB.asof+")";
   }
 
   // ---- render dashboard ----
