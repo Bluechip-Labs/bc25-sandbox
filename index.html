@@ -288,6 +288,18 @@
       <div class="disc" id="gResult" hidden></div>
     </div>
     <div class="card">
+      <h2>📈 Higher or Lower</h2>
+      <p class="muted sm">Real BC25 Stage B history. We show you a slice of a chart — call whether it closed <b>higher</b> or <b>lower</b> a week later. Build the longest streak you can.</p>
+      <div class="gstatus"><span id="pgWho" class="muted sm"></span><span class="turn">Streak <b id="pgStreak">0</b> · Best <b id="pgBest">0</b></span></div>
+      <canvas id="pgChart" width="640" height="200"></canvas>
+      <div class="gctl" id="pgBtns">
+        <button class="btn" id="pgUp" style="width:auto">📈 Higher</button>
+        <button class="btn" id="pgDown" style="width:auto">📉 Lower</button>
+        <button class="btn sm" id="pgNext" style="width:auto;display:none">Next ▶</button>
+      </div>
+      <div class="disc" id="pgResult" hidden></div>
+    </div>
+    <div class="card">
       <h3>🏆 High scores <span class="muted sm" id="gHsNote"></span></h3>
       <div id="gHigh"></div>
     </div>
@@ -717,6 +729,8 @@
     rows.forEach(function(d){var s=(o.solo||{})[d[0]]||{},c=(o.cpu||{})[d[0]]||{w:0,l:0,t:0};
       var solo=s.bestMoves!=null?(s.bestMoves+" mv · "+(s.bestMs/1000).toFixed(1)+"s"):"—";
       html+="<div class='ghrow'><span class='lab'>"+d[1]+"</span><span>Solo: <b>"+solo+"</b></span><span>vs Bot: <b>"+c.w+"–"+c.l+(c.t?"–"+c.t:"")+"</b></span></div>";});
+    var pb=((o.price||{}).best)||0;
+    html+="<div class='ghrow'><span class='lab'>Higher or Lower</span><span>Best streak: <b>"+pb+"</b></span><span></span></div>";
     document.getElementById("gHigh").innerHTML=html;
     var nn=document.getElementById("gHsNote");if(nn)nn.textContent="(saved on this device)";
   }
@@ -725,7 +739,72 @@
     gStarted=false;gMoves=0;gMatched=0;gUp=[];gLock=false;gScoreYou=0;gScoreCpu=0;gTurn="you";gCpuMem={};cpuWants=null;
     buildDeck();renderBoard();updateStatus();var r=document.getElementById("gResult");if(r)r.hidden=true;
   }
-  function gamesShow(){if(!gDeck.length)newGame();renderHigh();updateStatus();}
+  function gamesShow(){if(!gDeck.length)newGame();if(!pg.ready)pgStart();renderHigh();updateStatus();}
+
+  // ---- Game 2: Higher or Lower (real Stage B series) ----
+  var PGA=[{k:"index",label:"BC25",col:"#d4a73a"},{k:"btc",label:"Bitcoin",col:"#f7931a"},{k:"eth",label:"Ethereum",col:"#627eea"},{k:"sol",label:"Solana",col:"#14f195"}];
+  var pg={ready:false,streak:0,best:0,A:null,iEnd:0,future:0,win:42,step:5,answered:false,lastWrong:false};
+  function pgLoadBest(){var o=gLoad();pg.best=((o.price||{}).best)||0;}
+  function pgSaveBest(){var o=gLoad();o.price=o.price||{};if(pg.best>(o.price.best||0)){o.price.best=pg.best;gStore(o);}}
+  function pgRound(){
+    if(!STAGEB||!STAGEB.series){document.getElementById("pgWho").textContent="Loading real data…";return;}
+    pg.A=PGA[Math.floor(Math.random()*PGA.length)];
+    var S=STAGEB.series[pg.A.k],minS=pg.win,maxS=S.length-pg.step-2;
+    var i=minS+Math.floor(Math.random()*(maxS-minS));var guard=0;
+    while(S[i+pg.step]===S[i]&&guard++<40){i++;if(i>maxS)i=minS;}
+    pg.iEnd=i;pg.future=i+pg.step;pg.answered=false;pg.lastWrong=false;
+    document.getElementById("pgWho").innerHTML="Asset: <b style='color:"+pg.A.col+"'>"+pg.A.label+"</b> · a week later it closed…";
+    document.getElementById("pgResult").hidden=true;
+    document.getElementById("pgUp").disabled=false;document.getElementById("pgDown").disabled=false;
+    document.getElementById("pgNext").style.display="none";
+    document.getElementById("pgStreak").textContent=pg.streak;document.getElementById("pgBest").textContent=pg.best;
+    drawPG(false);
+  }
+  function drawPG(reveal){
+    var c=document.getElementById("pgChart");if(!c)return;var x=c.getContext("2d"),W=c.width,H=c.height,P=26;
+    x.clearRect(0,0,W,H);var cs=getComputedStyle(document.documentElement);
+    var S=STAGEB.series[pg.A.k],a=pg.iEnd-pg.win+1,shown=[];for(var i=a;i<=pg.iEnd;i++)shown.push(S[i]);
+    var futV=S[pg.future],up=futV>S[pg.iEnd];
+    var pts=shown.slice(),endIdx=pg.win-1;
+    if(reveal)pts=pts.concat([futV]);
+    var mn=Math.min.apply(null,pts),mx=Math.max.apply(null,pts),pad=(mx-mn)*0.12||1;
+    var n=pts.length-1;
+    function X(i){return P+(W-2*P)*i/( (reveal?pg.win:pg.win-1) );}
+    function Y(v){return H-P-(H-2*P)*(v-(mn-pad))/((mx+pad)-(mn-pad));}
+    x.strokeStyle=cs.getPropertyValue('--line');x.lineWidth=1;[0,.5,1].forEach(function(f){var y=P+(H-2*P)*f;x.beginPath();x.moveTo(P,y);x.lineTo(W-P,y);x.stroke();});
+    // known slice
+    x.strokeStyle=pg.A.col;x.lineWidth=2.6;x.beginPath();for(var j=0;j<=endIdx;j++){var px=X(j),py=Y(shown[j]);j?x.lineTo(px,py):x.moveTo(px,py);}x.stroke();
+    // marker at "now"
+    x.fillStyle=pg.A.col;x.beginPath();x.arc(X(endIdx),Y(shown[endIdx]),3.5,0,7);x.fill();
+    if(reveal){var col=up?"#37b26b":"#d9534f";x.strokeStyle=col;x.lineWidth=2.6;x.setLineDash([5,4]);
+      x.beginPath();x.moveTo(X(endIdx),Y(shown[endIdx]));x.lineTo(X(pg.win),Y(futV));x.stroke();x.setLineDash([]);
+      x.fillStyle=col;x.beginPath();x.arc(X(pg.win),Y(futV),4.5,0,7);x.fill();}
+    else{x.fillStyle=cs.getPropertyValue('--muted');x.font="12px monospace";x.fillText("?",W-P-4,Y(shown[endIdx]));}
+  }
+  function pgAnswer(dir){
+    if(pg.answered||!STAGEB)return;pg.answered=true;
+    var S=STAGEB.series[pg.A.k],up=S[pg.future]>S[pg.iEnd],correct=(dir==="up")===up;
+    var mv=(S[pg.future]/S[pg.iEnd]-1)*100;
+    document.getElementById("pgUp").disabled=true;document.getElementById("pgDown").disabled=true;
+    drawPG(true);
+    var r=document.getElementById("pgResult");r.hidden=false;
+    var moveTxt="<b>"+(up?"▲ higher":"▼ lower")+"</b> ("+(mv>=0?"+":"")+fmt(mv,1)+"%)";
+    if(correct){pg.streak++;if(pg.streak>pg.best){pg.best=pg.streak;pgSaveBest();}
+      r.innerHTML="✅ Right — "+pg.A.label+" went "+moveTxt+". Streak <b>"+pg.streak+"</b>."+(pg.streak===pg.best&&pg.streak>1?" 🏅 New best!":"");
+      say("Called it. 🐂📈","🐂");
+      document.getElementById("pgNext").textContent="Next ▶";}
+    else{pg.lastWrong=true;
+      r.innerHTML="❌ Nope — "+pg.A.label+" went "+moveTxt+". Final streak <b>"+pg.streak+"</b>. Best <b>"+pg.best+"</b>.";
+      say("The market humbles us all. 🐻 Run it back.","🐻");
+      document.getElementById("pgNext").textContent="Play again ▶";}
+    document.getElementById("pgStreak").textContent=pg.streak;document.getElementById("pgBest").textContent=pg.best;
+    document.getElementById("pgNext").style.display="";
+    renderHigh();
+  }
+  function pgStart(){pg.ready=true;pg.streak=0;pgLoadBest();pgRound();}
+  var _u=document.getElementById("pgUp");if(_u)_u.addEventListener("click",function(){pgAnswer("up");});
+  var _d=document.getElementById("pgDown");if(_d)_d.addEventListener("click",function(){pgAnswer("down");});
+  var _n=document.getElementById("pgNext");if(_n)_n.addEventListener("click",function(){if(pg.lastWrong)pg.streak=0;pgRound();});
   function gSetActive(seg,btn){document.getElementById(seg).querySelectorAll(".gbtn").forEach(function(b){b.classList.toggle("active",b===btn);});}
   if(gBoardEl)gBoardEl.addEventListener("click",function(e){var el=e.target.closest(".gcard");if(!el)return;
     if(gLock)return;if(gMode==="cpu"&&gTurn!=="you")return;playerFlip(+el.getAttribute("data-pos"));});
