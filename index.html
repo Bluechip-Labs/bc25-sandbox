@@ -124,6 +124,11 @@
   .ghrow{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13.5px}
   .ghrow:last-child{border-bottom:none}
   .ghrow .lab{color:var(--muted)}
+  .runwrap{position:relative;max-width:360px;margin:10px auto 0}
+  .runwrap canvas{width:100%;display:block;border-radius:12px;border:1px solid var(--line);background:#0b1326;touch-action:none}
+  .runoverlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(5,10,22,.58);border-radius:12px;text-align:center;padding:12px;color:#eaf0ff}
+  .runoverlay.hide{display:none}
+  #runL,#runJ,#runR{cursor:pointer;min-width:52px}
 </style>
 
 <div class="wrap">
@@ -300,6 +305,20 @@
       <div class="disc" id="pgResult" hidden></div>
     </div>
     <div class="card">
+      <h2>🏃 Bull Run</h2>
+      <p class="muted sm">The bears are chasing! Switch lanes to dodge 🐻, jump the 🔻 dips, and grab 🪙. Swipe, tap to jump, use the buttons, or arrow keys (⬆️ jumps). How far can the BC25 bull run?</p>
+      <div class="gstatus"><span class="muted sm">Dodge bears · jump dips · grab coins</span><span class="turn">Score <b id="runScore">0</b> · Best <b id="runBest">0</b></span></div>
+      <div class="runwrap">
+        <canvas id="runCanvas" width="360" height="460"></canvas>
+        <div class="runoverlay" id="runOverlay"><button class="btn" id="runStart" style="width:auto">▶ Start running</button><div class="sm" id="runMsg" style="margin-top:10px;opacity:.9"></div></div>
+      </div>
+      <div class="gctl" style="justify-content:center;margin-top:10px">
+        <button class="gbtn" id="runL">◀</button>
+        <button class="gbtn" id="runJ">⤒ Jump</button>
+        <button class="gbtn" id="runR">▶</button>
+      </div>
+    </div>
+    <div class="card">
       <h3>🏆 High scores <span class="muted sm" id="gHsNote"></span></h3>
       <div id="gHigh"></div>
     </div>
@@ -373,6 +392,7 @@
     document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.getAttribute('data-t')===view);});
     if(view==="time")drawTime();
     if(view==="bear"){bearPlaying=false;document.getElementById("bearResult").hidden=true;drawBear(0);}
+    if(view!=="games")runPause();
     if(view==="games")gamesShow();
   }
   tabsEl.addEventListener('click',function(e){var b=e.target.closest('.tab');if(b)show(b.getAttribute('data-t'));});
@@ -729,8 +749,9 @@
     rows.forEach(function(d){var s=(o.solo||{})[d[0]]||{},c=(o.cpu||{})[d[0]]||{w:0,l:0,t:0};
       var solo=s.bestMoves!=null?(s.bestMoves+" mv · "+(s.bestMs/1000).toFixed(1)+"s"):"—";
       html+="<div class='ghrow'><span class='lab'>"+d[1]+"</span><span>Solo: <b>"+solo+"</b></span><span>vs Bot: <b>"+c.w+"–"+c.l+(c.t?"–"+c.t:"")+"</b></span></div>";});
-    var pb=((o.price||{}).best)||0;
+    var pb=((o.price||{}).best)||0,rb=((o.run||{}).best)||0;
     html+="<div class='ghrow'><span class='lab'>Higher or Lower</span><span>Best streak: <b>"+pb+"</b></span><span></span></div>";
+    html+="<div class='ghrow'><span class='lab'>Bull Run</span><span>Best score: <b>"+rb+"</b></span><span></span></div>";
     document.getElementById("gHigh").innerHTML=html;
     var nn=document.getElementById("gHsNote");if(nn)nn.textContent="(saved on this device)";
   }
@@ -739,7 +760,7 @@
     gStarted=false;gMoves=0;gMatched=0;gUp=[];gLock=false;gScoreYou=0;gScoreCpu=0;gTurn="you";gCpuMem={};cpuWants=null;
     buildDeck();renderBoard();updateStatus();var r=document.getElementById("gResult");if(r)r.hidden=true;
   }
-  function gamesShow(){if(!gDeck.length)newGame();if(!pg.ready)pgStart();renderHigh();updateStatus();}
+  function gamesShow(){if(!gDeck.length)newGame();if(!pg.ready)pgStart();runLoadBest();if(run.state==="idle")runIdleDraw();renderHigh();updateStatus();}
 
   // ---- Game 2: Higher or Lower (real Stage B series) ----
   var PGA=[{k:"index",label:"BC25",col:"#d4a73a"},{k:"btc",label:"Bitcoin",col:"#f7931a"},{k:"eth",label:"Ethereum",col:"#627eea"},{k:"sol",label:"Solana",col:"#14f195"}];
@@ -805,6 +826,93 @@
   var _u=document.getElementById("pgUp");if(_u)_u.addEventListener("click",function(){pgAnswer("up");});
   var _d=document.getElementById("pgDown");if(_d)_d.addEventListener("click",function(){pgAnswer("down");});
   var _n=document.getElementById("pgNext");if(_n)_n.addEventListener("click",function(){if(pg.lastWrong)pg.streak=0;pgRound();});
+
+  // ---- Game 3: Bull Run (3-lane endless runner) ----
+  var runCv=document.getElementById("runCanvas"),runX=runCv?runCv.getContext("2d"):null;
+  var bullImg=new Image();bullImg.src="/bull-logo.png";var bullOk=false;bullImg.onload=function(){bullOk=true;};
+  var RW=360,RH=460,LANES=[RW*0.22,RW*0.5,RW*0.78],PLY=RH-70;
+  var run={state:"idle",lane:1,px:LANES[1],ent:[],speed:0,elapsed:0,spawnT:0,score:0,best:0,jumpT:0,jumpDur:0.62,roadOff:0,last:0,raf:0};
+  function runLoadBest(){var o=gLoad();run.best=((o.run||{}).best)||0;var rb=document.getElementById("runBest");if(rb)rb.textContent=run.best;}
+  function runSaveBest(){var o=gLoad();o.run=o.run||{};if(run.score>(o.run.best||0)){o.run.best=Math.floor(run.score);gStore(o);}}
+  function isGamesView(){var s=document.querySelector('section[data-view="games"]');return s&&!s.hidden;}
+  function runReset(){run.lane=1;run.px=LANES[1];run.ent=[];run.speed=165;run.elapsed=0;run.spawnT=0.6;run.score=0;run.jumpT=0;run.roadOff=0;run.last=0;}
+  function runStartGame(){runReset();run.state="play";document.getElementById("runOverlay").classList.add("hide");run.raf=requestAnimationFrame(runLoop);}
+  function runPause(){if(run.state==="play"){run.state="paused";cancelAnimationFrame(run.raf);var ov=document.getElementById("runOverlay"),ms=document.getElementById("runMsg"),st=document.getElementById("runStart");if(ov){ov.classList.remove("hide");st.textContent="▶ Resume";ms.textContent="Paused";}}}
+  function runResume(){if(run.state==="paused"){run.state="play";document.getElementById("runOverlay").classList.add("hide");run.last=0;run.raf=requestAnimationFrame(runLoop);}}
+  function runOver(){run.state="over";cancelAnimationFrame(run.raf);runSaveBest();runLoadBest();
+    var ov=document.getElementById("runOverlay"),ms=document.getElementById("runMsg"),st=document.getElementById("runStart");
+    ov.classList.remove("hide");st.textContent="🔁 Run again";
+    ms.innerHTML="🐻 The bears caught you! Score <b>"+Math.floor(run.score)+"</b>"+(Math.floor(run.score)>=run.best?" — 🏅 new best!":" · Best "+run.best);
+    say("The bears got the bull this time. Run it back! 🐂","🐻");renderHigh();}
+  function runSpawn(){var lane=Math.floor(Math.random()*3),r=Math.random(),type=r<0.55?"bear":(r<0.8?"coin":"barrier");
+    run.ent.push({type:type,lane:lane,y:-30,dead:false});}
+  function runLane(d){if(run.state!=="play")return;run.lane=Math.max(0,Math.min(2,run.lane+d));}
+  function runJump(){if(run.state==="play"&&run.jumpT<=0)run.jumpT=run.jumpDur;}
+  function runStep(dt){
+    run.elapsed+=dt;run.speed=Math.min(440,165+run.elapsed*7);
+    run.px+=(LANES[run.lane]-run.px)*Math.min(1,dt*12);
+    if(run.jumpT>0)run.jumpT-=dt;
+    run.spawnT-=dt;if(run.spawnT<=0){runSpawn();run.spawnT=Math.max(0.46,1.05-run.elapsed*0.012);}
+    run.roadOff=(run.roadOff+run.speed*dt)%44;
+    var air=run.jumpT>0;
+    for(var i=0;i<run.ent.length;i++){var e=run.ent[i];if(e.dead)continue;e.y+=run.speed*dt;
+      if(!e.scored&&e.lane===run.lane&&Math.abs(e.y-PLY)<26){
+        if(e.type==="coin"){run.score+=5;e.dead=true;e.scored=true;}
+        else if(e.type==="barrier"){if(!air){return runOver();}}
+        else {return runOver();} // bear
+      }
+      if(e.y>PLY+34)e.scored=true; // passed
+    }
+    run.ent=run.ent.filter(function(e){return !e.dead&&e.y<RH+40;});
+    run.score+=run.speed*dt*0.02;
+    var sc=document.getElementById("runScore");if(sc)sc.textContent=Math.floor(run.score);
+  }
+  function runRender(){
+    if(!runX)return;var x=runX;x.clearRect(0,0,RW,RH);
+    // road
+    x.fillStyle="#0b1326";x.fillRect(0,0,RW,RH);
+    x.strokeStyle="rgba(255,255,255,.10)";x.lineWidth=2;
+    [RW*0.36,RW*0.64].forEach(function(bx){x.setLineDash([16,16]);x.lineDashOffset=-run.roadOff;x.beginPath();x.moveTo(bx,0);x.lineTo(bx,RH);x.stroke();});
+    x.setLineDash([]);
+    // entities
+    x.textAlign="center";x.textBaseline="middle";
+    run.ent.forEach(function(e){var ex=LANES[e.lane];
+      if(e.type==="bear"){x.font="30px serif";x.fillText("🐻",ex,e.y);}
+      else if(e.type==="coin"){x.font="24px serif";x.fillText("🪙",ex,e.y);}
+      else{x.fillStyle="#d9534f";var w=38,h=16;roundRect(x,ex-w/2,e.y-h/2,w,h,5);x.fill();x.fillStyle="#fff";x.font="bold 11px monospace";x.fillText("▼ dip",ex,e.y);}
+    });
+    // player
+    var air=run.jumpT>0,prog=air?Math.sin((1-run.jumpT/run.jumpDur)*Math.PI):0,lift=prog*48;
+    x.fillStyle="rgba(0,0,0,.35)";x.beginPath();x.ellipse(run.px,PLY+22,20-prog*8,6-prog*3,0,0,7);x.fill();
+    var sz=46+prog*6;
+    if(bullOk){x.drawImage(bullImg,run.px-sz/2,PLY-sz/2-lift,sz,sz);}
+    else{x.font="34px serif";x.fillText("🐂",run.px,PLY-lift);}
+  }
+  function roundRect(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+  function runLoop(ts){if(run.state!=="play")return;if(!run.last)run.last=ts;var dt=Math.min(0.05,(ts-run.last)/1000);run.last=ts;runStep(dt);if(run.state!=="play")return;runRender();run.raf=requestAnimationFrame(runLoop);}
+  function runIdleDraw(){runReset();runRender();}
+  // controls
+  if(runCv){
+    var sx=0,sy=0,st0=0;
+    runCv.addEventListener("touchstart",function(e){var t=e.changedTouches[0];sx=t.clientX;sy=t.clientY;st0=Date.now();},{passive:true});
+    runCv.addEventListener("touchend",function(e){var t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+      if(run.state!=="play"){return;}
+      if(Math.abs(dx)<24&&Math.abs(dy)<24){runJump();return;} // tap
+      if(Math.abs(dx)>Math.abs(dy)){runLane(dx>0?1:-1);}else if(dy<0){runJump();}
+    },{passive:true});
+  }
+  var rL=document.getElementById("runL");if(rL)rL.addEventListener("click",function(){runLane(-1);});
+  var rR=document.getElementById("runR");if(rR)rR.addEventListener("click",function(){runLane(1);});
+  var rJ=document.getElementById("runJ");if(rJ)rJ.addEventListener("click",runJump);
+  var rS=document.getElementById("runStart");if(rS)rS.addEventListener("click",function(){if(run.state==="paused")runResume();else runStartGame();});
+  document.addEventListener("keydown",function(e){
+    if(!isGamesView()||run.state!=="play")return;
+    var k=e.key;
+    if(k==="ArrowLeft"||k==="a"||k==="A"){runLane(-1);e.preventDefault();}
+    else if(k==="ArrowRight"||k==="d"||k==="D"){runLane(1);e.preventDefault();}
+    else if(k==="ArrowUp"||k==="w"||k==="W"||k===" "){runJump();e.preventDefault();}
+  });
+  document.addEventListener("visibilitychange",function(){if(document.hidden)runPause();});
   function gSetActive(seg,btn){document.getElementById(seg).querySelectorAll(".gbtn").forEach(function(b){b.classList.toggle("active",b===btn);});}
   if(gBoardEl)gBoardEl.addEventListener("click",function(e){var el=e.target.closest(".gcard");if(!el)return;
     if(gLock)return;if(gMode==="cpu"&&gTurn!=="you")return;playerFlip(+el.getAttribute("data-pos"));});
