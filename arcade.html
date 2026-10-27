@@ -2,6 +2,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BC25 Arcade</title>
+<script defer src="/analytics.js"></script>
 <style>
   /* BC25 Sandbox — navy/gold, tabbed simulator. Illustrative data (prototype). */
   :root {
@@ -131,6 +132,20 @@
 
   a.iconbtn{text-decoration:none;display:inline-flex;align-items:center;gap:4px}
   .arc-sub{color:var(--muted);font-size:13px;margin:-4px 0 14px}
+  /* ---- responsive: mobile tightening + desktop widening ---- */
+  @media (min-width:1000px){ .wrap{max-width:860px} }
+  @media (max-width:480px){
+    .wrap{padding-block:14px 40px}
+    .card{padding:14px}
+    .brand{font-size:16px;gap:7px}
+    .logo-coin{height:30px;width:30px}
+    .gctl{gap:8px}
+    .gbtn{padding:7px 10px;font-size:12px}
+    .gstatus{font-size:13px;gap:12px}
+    .gboard{gap:6px}
+    .runwrap{max-width:320px}
+    #runL,#runJ,#runR{min-width:46px}
+  }
 </style>
 
 <div class="wrap">
