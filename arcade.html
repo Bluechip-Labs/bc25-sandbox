@@ -545,6 +545,30 @@
      "################"],
     ["################",
      "#<...c....C#...#",
+     "#....~~...c#...#",
+     "#..c.......#...#",
+     "#C....SS...#...#",
+     "#..........#...#",
+     "#....c...O.G..>#",
+     "#.....SS...#...#",
+     "#C.........#...#",
+     "#..~~......#...#",
+     "#.c....C..$#...#",
+     "################"],
+    ["################",
+     "#<....~~.......#",
+     "#..SS...~~..C..#",
+     "#....~~....SS..#",
+     "#g....C...~~...#",
+     "#.~~..SS......>#",
+     "#.~~....C..g...#",
+     "#....SS...~~...#",
+     "#C.....~~....C.#",
+     "#..g....SS.....#",
+     "#....C....~~...#",
+     "################"],
+    ["################",
+     "#<...c....C#...#",
      "#...F......#...#",
      "#.....SS...#...#",
      "#C....SS..c#...#",
@@ -554,6 +578,18 @@
      "#C.........#...#",
      "#..~~......#...#",
      "#.c....C..$#...#",
+     "################"],
+    ["################",
+     "#<....C...C....#",
+     "#..F.........$.#",
+     "#......gg......#",
+     "#C...$.....C...#",
+     "#.....SS.......#",
+     "#..$.......$..>#",
+     "#.....SS.......#",
+     "#C....g....C...#",
+     "#..$.......$...#",
+     "#....C...C.....#",
      "################"],
     ["################",
      "#..............#",
@@ -568,11 +604,13 @@
      "#..............#",
      "################"]
   ];
-  var DQ_ROOMNAMES=["Oracle Gate","Mempool Caverns","Vault Approach","The Bear Market's Lair"];
+  var DQ_ROOMNAMES=["Oracle Gate","Mempool Caverns","Whale Tunnels","Rug-Pull Ravine","Vault Approach","Cold Storage","The Bear Market's Lair"];
   var DQ_RIDDLES=[
     {q:"I have no bank and no CEO. My ledger is public, my supply is fixed at 21 million. What am I?",a:0,opts:["Bitcoin","A checking account","A company stock"]},
     {q:"Investors lose their nerve and sell everything on the way down. Three letters name this panic.",a:1,opts:["APY","FUD","NFT"]},
-    {q:"The only wallet a hacker can never reach over the internet. Which is it?",a:2,opts:["A hot wallet","An exchange account","A cold (offline) wallet"]}
+    {q:"The only wallet a hacker can never reach over the internet. Which is it?",a:2,opts:["A hot wallet","An exchange account","A cold (offline) wallet"]},
+    {q:"BC25's whole defensive idea in four words: on the way down, you aim to…",a:1,opts:["Win bigger","Lose less","Do nothing"]},
+    {q:"Twelve to twenty-four of these words can restore your whole wallet. Guard them with your life.",a:0,opts:["Seed phrase","Gas fees","Ticker symbols"]}
   ];
   var DQ={on:false,cv:null,cx:null,raf:null,last:0,state:"title",
     T:30,COLS:16,ROWS:12,room:0,rooms:null,
@@ -608,7 +646,7 @@
           g.push(t);}
         grid.push(g);}
       return {grid:grid,coins:coins,dias:dias,keys:keys,mons:mons,forge:forge,oracle:oracle,gate:gate,
-              exitE:exitE,exitW:exitW,boss:boss,start:start,gateOpen:false,gateType:(ri===0?"riddle":"key"),treasure:null,cleared:false};
+              exitE:exitE,exitW:exitW,boss:boss,start:start,gateOpen:false,gateType:(oracle?"riddle":"key"),treasure:null,cleared:false};
     });
   }
   function dqMob(type,gx,gy,ri){var T=DQ.T,base={x:gx*T+T/2,y:gy*T+T/2,hit:-1};
@@ -652,7 +690,7 @@
     document.getElementById("dqRiddleQ").textContent="🔮 "+rid.q;
     document.getElementById("dqRiddleOpts").innerHTML=rid.opts.map(function(o,i){return '<button class="dqopt" data-i="'+i+'">'+o+'</button>';}).join("");
     document.getElementById("dqRiddle").hidden=false;say("The Oracle poses a riddle…","🔮");}
-  function dqAnswer(i){var rid=DQ_RIDDLES[DQ.riddleIdx];document.getElementById("dqRiddle").hidden=true;DQ.state="play";
+  function dqAnswer(i){var rid=DQ_RIDDLES[DQ.riddleIdx];document.getElementById("dqRiddle").hidden=true;DQ.state="play";dqEnsureLoop();
     if(i===rid.a){DQ.rooms[DQ.room].gateOpen=true;toast("✅ Correct — the gate opens!");say("The gate grinds open. Well reasoned. 🛡️","🛡️");}
     else{toast("❌ Not quite — try again");say("The Oracle shakes its head. Approach again to retry.","🔮");}
   }
@@ -668,7 +706,7 @@
     if(what==="armor"&&DQ.armor<DQ_COST_A.length&&DQ.coins>=DQ_COST_A[DQ.armor]){DQ.coins-=DQ_COST_A[DQ.armor];DQ.armor++;DQ.maxHp++;DQ.hp++;toast("🛡️ Armor upgraded");}
     else if(what==="sword"&&DQ.sword<DQ_COST_S.length&&DQ.coins>=DQ_COST_S[DQ.sword]){DQ.coins-=DQ_COST_S[DQ.sword];DQ.sword++;toast("🗡️ Sword upgraded");}
     dqRenderShop();dqSyncHud();}
-  function dqCloseShop(){document.getElementById("dqShop").hidden=true;DQ.state="play";}
+  function dqCloseShop(){document.getElementById("dqShop").hidden=true;DQ.state="play";dqEnsureLoop();}
   function dqSyncHud(){
     var hud=document.getElementById("dqHud");if(hud){var h="";for(var i=0;i<DQ.maxHp;i++)h+=(i<DQ.hp?"❤":"🖤");hud.innerHTML=h+" &nbsp; 🪙"+DQ.coins+" &nbsp; 💎"+DQ.diamonds+(DQ.hasKey?" &nbsp; 🔑":"");}
     var vis=DQ.visited?Object.keys(DQ.visited).length:0;
@@ -779,10 +817,13 @@
     say(win?"Vault secured. Lose less, last longer. 🐂🛡️":"The bears got us. Run it back! 🐻","🛡️");
   }
   function dqLoop(ts){
-    if(DQ.state!=="play"){DQ.raf=null;return;}
+    // riddle/shop keep the loop alive (movement just pauses) so play resumes cleanly on close
+    if(DQ.state==="over"||DQ.state==="win"||DQ.state==="paused"||DQ.state==="title"){DQ.raf=null;return;}
     if(!DQ.last)DQ.last=ts;var dt=Math.min(0.05,(ts-DQ.last)/1000);DQ.last=ts;
-    dqUpdate(dt);dqDraw();DQ.raf=requestAnimationFrame(dqLoop);
+    if(DQ.state==="play")dqUpdate(dt);
+    dqDraw();DQ.raf=requestAnimationFrame(dqLoop);
   }
+  function dqEnsureLoop(){if(!DQ.raf){DQ.last=0;DQ.raf=requestAnimationFrame(dqLoop);}}
   function dqStartGame(){
     dqResetProgress();DQ.state="play";DQ.last=0;dqSyncHud();
     document.getElementById("dqOverlay").classList.add("hide");
