@@ -615,7 +615,7 @@
   var DQ={on:false,cv:null,cx:null,raf:null,last:0,state:"title",
     T:30,COLS:16,ROWS:12,room:0,rooms:null,
     px:0,py:0,pr:11,spd:120,face:"down",atk:0,swing:0,inv:0,
-    hp:3,maxHp:3,coins:0,diamonds:0,hasKey:false,armor:0,sword:0,
+    hp:4,maxHp:4,coins:0,diamonds:0,hasKey:false,armor:0,sword:0,
     key:{up:false,down:false,left:false,right:false},
     score:0,best:0,visited:null,xcool:0,riddleIdx:0,bossMax:0};
   DQ.cv=document.getElementById("dqCanvas");DQ.cx=DQ.cv?DQ.cv.getContext("2d"):null;
@@ -650,14 +650,14 @@
     });
   }
   function dqMob(type,gx,gy,ri){var T=DQ.T,base={x:gx*T+T/2,y:gy*T+T/2,hit:-1};
-    if(type==="bear"){base.hp=2+ri;base.spd=42;base.dmg=1;base.r=13;base.emoji="🐻";}
-    else if(type==="fud"){base.hp=2;base.spd=58;base.dmg=1;base.r=11;base.emoji="👺";}
-    else{base.hp=2;base.spd=50;base.dmg=1;base.r=11;base.emoji="🦀";base.bob=Math.random()*6;}
+    if(type==="bear"){base.hp=2+ri;base.spd=39;base.dmg=1;base.r=13;base.emoji="🐻";}
+    else if(type==="fud"){base.hp=2;base.spd=53;base.dmg=1;base.r=11;base.emoji="👺";}
+    else{base.hp=2;base.spd=46;base.dmg=1;base.r=11;base.emoji="🦀";base.bob=Math.random()*6;}
     base.type=type;return base;}
-  function dqBoss(gx,gy){var T=DQ.T;return {x:gx*T+T/2,y:gy*T+T/2,hp:16,maxhp:16,spd:38,dmg:1,r:22,hit:-1,type:"boss",emoji:"🐻"};}
+  function dqBoss(gx,gy){var T=DQ.T;return {x:gx*T+T/2,y:gy*T+T/2,hp:16,maxhp:16,spd:35,dmg:1,r:22,hit:-1,type:"boss",emoji:"🐻"};}
   function dqResetProgress(){
     dqParse();DQ.room=0;DQ.coins=0;DQ.diamonds=0;DQ.hasKey=false;DQ.armor=0;DQ.sword=0;
-    DQ.hp=3;DQ.maxHp=3;DQ.score=0;DQ.inv=0;DQ.atk=0;DQ.face="down";DQ.xcool=0;
+    DQ.hp=4;DQ.maxHp=4;DQ.score=0;DQ.inv=0;DQ.atk=0;DQ.face="down";DQ.xcool=0;
     DQ.visited={0:true};DQ.best=dqBest();
     var s=DQ.rooms[0].start||{x:1,y:1};DQ.px=s.x*DQ.T+DQ.T/2;DQ.py=s.y*DQ.T+DQ.T/2;
     DQ.key={up:false,down:false,left:false,right:false};
