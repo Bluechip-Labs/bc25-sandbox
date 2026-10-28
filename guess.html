@@ -1,0 +1,32 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Higher or Lower · BC25 Arcade</title>
+<link rel="stylesheet" href="/arcade.css">
+<script defer src="/analytics.js"></script>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><img src="/coin-logo.png" class="logo-coin" alt="BC25"> BC25 Arcade <span class="pill">Games</span></div>
+    <a class="iconbtn" href="/arcade.html">← Arcade</a>
+  </header>
+  <div class="mascot"><div class="face" id="mFace"><img src="/bull-logo.png" class="bullimg" alt=""></div><div class="say" id="mSay"><b>Higher or Lower.</b> Read the chart, call the next move. 📈</div></div>
+  <section data-view="games">
+    <div class="card">
+      <h2>📈 Higher or Lower</h2>
+      <p class="muted sm">Real BC25 Stage B history. We show you a slice of a chart — call whether it closed <b>higher</b> or <b>lower</b> a week later. Build the longest streak you can.</p>
+      <div class="gstatus"><span id="pgWho" class="muted sm"></span><span class="turn">Streak <b id="pgStreak">0</b> · Best <b id="pgBest">0</b></span></div>
+      <canvas id="pgChart" width="640" height="200"></canvas>
+      <div class="gctl" id="pgBtns">
+        <button class="btn" id="pgUp" style="width:auto">📈 Higher</button>
+        <button class="btn" id="pgDown" style="width:auto">📉 Lower</button>
+        <button class="btn sm" id="pgNext" style="width:auto;display:none">Next ▶</button>
+      </div>
+      <div class="disc" id="pgResult" hidden></div>
+    </div>
+  </section>
+  <div class="disc">⚠️ Games are for fun only — simulated, no real money or tokens, nothing on-chain. The "Higher or Lower" charts use BC25's <b>Stage B paper-test</b> data (hypothetical; <b>past performance does not guarantee future results</b>). Not an offer, solicitation, or investment advice.</div>
+  <div class="foot">BC25 Defender Index · Bluechip Labs · arcade</div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/games.js"></script>

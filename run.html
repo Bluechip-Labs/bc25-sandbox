@@ -1,0 +1,34 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bull Run · BC25 Arcade</title>
+<link rel="stylesheet" href="/arcade.css">
+<script defer src="/analytics.js"></script>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><img src="/coin-logo.png" class="logo-coin" alt="BC25"> BC25 Arcade <span class="pill">Games</span></div>
+    <a class="iconbtn" href="/arcade.html">← Arcade</a>
+  </header>
+  <div class="mascot"><div class="face" id="mFace"><img src="/bull-logo.png" class="bullimg" alt=""></div><div class="say" id="mSay"><b>Bull Run.</b> Dodge the bears, jump the dips, grab the coins. 🐂</div></div>
+  <section data-view="games">
+    <div class="card">
+      <h2>🏃 Bull Run</h2>
+      <p class="muted sm">The bears are chasing! Switch lanes to dodge 🐻, jump the 🔻 dips, and grab 🪙. Swipe, tap to jump, use the buttons, or arrow keys (⬆️ jumps). How far can the BC25 bull run?</p>
+      <div class="gstatus"><span class="muted sm">Dodge bears · jump dips · grab coins</span><span class="turn">Score <b id="runScore">0</b> · Best <b id="runBest">0</b></span></div>
+      <div class="runwrap">
+        <canvas id="runCanvas" width="360" height="460"></canvas>
+        <div class="runoverlay" id="runOverlay"><button class="btn" id="runStart" style="width:auto">▶ Start running</button><div class="sm" id="runMsg" style="margin-top:10px;opacity:.9"></div></div>
+      </div>
+      <div class="gctl" style="justify-content:center;margin-top:10px">
+        <button class="gbtn" id="runL">◀</button>
+        <button class="gbtn" id="runJ">⤒ Jump</button>
+        <button class="gbtn" id="runR">▶</button>
+      </div>
+    </div>
+  </section>
+  <div class="disc">⚠️ Games are for fun only — simulated, no real money or tokens, nothing on-chain. The "Higher or Lower" charts use BC25's <b>Stage B paper-test</b> data (hypothetical; <b>past performance does not guarantee future results</b>). Not an offer, solicitation, or investment advice.</div>
+  <div class="foot">BC25 Defender Index · Bluechip Labs · arcade</div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/games.js"></script>

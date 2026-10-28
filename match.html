@@ -1,0 +1,39 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crypto Match · BC25 Arcade</title>
+<link rel="stylesheet" href="/arcade.css">
+<script defer src="/analytics.js"></script>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><img src="/coin-logo.png" class="logo-coin" alt="BC25"> BC25 Arcade <span class="pill">Games</span></div>
+    <a class="iconbtn" href="/arcade.html">← Arcade</a>
+  </header>
+  <div class="mascot"><div class="face" id="mFace"><img src="/bull-logo.png" class="bullimg" alt=""></div><div class="say" id="mSay"><b>Crypto Match.</b> Flip, remember, pair them up. 🧠</div></div>
+  <section data-view="games">
+    <div class="card">
+      <h2>🧠 Crypto Match</h2>
+      <p class="muted sm">Flip cards and pair the degen icons — remember where they are. Play solo against the clock, or go head-to-head with the BC25 bot.</p>
+      <div class="gctl">
+        <div class="gseg" id="gDiff" role="group" aria-label="Difficulty">
+          <button class="gbtn active" data-diff="easy">Easy 4×4</button>
+          <button class="gbtn" data-diff="medium">Medium 6×6</button>
+          <button class="gbtn" data-diff="hard">Hard 8×8</button>
+        </div>
+        <div class="gseg" id="gMode" role="group" aria-label="Mode">
+          <button class="gbtn active" data-mode="solo">Solo</button>
+          <button class="gbtn" data-mode="cpu">vs Bot 🤖</button>
+        </div>
+        <button class="btn sm" id="gNew" style="width:auto">↻ New game</button>
+      </div>
+      <div class="gstatus" id="gStatus"></div>
+      <div id="gBoard" class="gboard"></div>
+      <div class="disc" id="gResult" hidden></div>
+    </div>
+  </section>
+  <div class="disc">⚠️ Games are for fun only — simulated, no real money or tokens, nothing on-chain. The "Higher or Lower" charts use BC25's <b>Stage B paper-test</b> data (hypothetical; <b>past performance does not guarantee future results</b>). Not an offer, solicitation, or investment advice.</div>
+  <div class="foot">BC25 Defender Index · Bluechip Labs · arcade</div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/games.js"></script>

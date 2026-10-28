@@ -1,0 +1,35 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Defender's Quest · BC25 Arcade</title>
+<link rel="stylesheet" href="/arcade.css">
+<script defer src="/analytics.js"></script>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><img src="/coin-logo.png" class="logo-coin" alt="BC25"> BC25 Arcade <span class="pill">Games</span></div>
+    <a class="iconbtn" href="/arcade.html">← Arcade</a>
+  </header>
+  <div class="mascot"><div class="face" id="mFace"><img src="/bull-logo.png" class="bullimg" alt=""></div><div class="say" id="mSay"><b>Welcome, Defender.</b> Arrows / WASD to move, Space to attack, E to use. 🛡️</div></div>
+  <section data-view="games">
+    <div class="card">
+      <h2>⚔️ Defender's Quest</h2>
+      <p class="muted sm">Guide the <b>blue BC25 Defender</b> through the Mempool Caverns to the Vault. Fight 🐻 bear-market beasts and 👺 FUD, dodge 🔺 spike traps and pits, answer the Oracle's riddle, grab 🪙 coins &amp; 💎 diamonds, upgrade armor &amp; sword at the 🔨 Forge — then slay <b>The Bear Market</b> and claim the vault. <b>Move:</b> arrows / WASD · <b>Attack:</b> Space or Z · <b>Use/Interact:</b> E.</p>
+      <div class="gstatus"><span id="dqHud" class="muted sm">❤❤❤</span><span class="turn">Score <b id="dqScore">0</b> · Best <b id="dqBest">0</b></span></div>
+      <div class="dqwrap">
+        <canvas id="dqCanvas" width="480" height="360"></canvas>
+        <div class="runoverlay" id="dqOverlay"><button class="btn" id="dqStart" style="width:auto">▶ Start the quest</button><div class="sm" id="dqMsg" style="margin-top:10px;opacity:.9"></div></div>
+        <div class="dqpanel" id="dqRiddle" hidden><div class="dqp-h" id="dqRiddleQ"></div><div id="dqRiddleOpts"></div></div>
+        <div class="dqpanel" id="dqShop" hidden><div class="dqp-h">🔨 Forge — spend 🪙 coins</div><div id="dqShopBody"></div><button class="btn sm" id="dqShopClose" style="width:auto;margin-top:10px">Leave forge</button></div>
+      </div>
+      <div class="gctl" style="justify-content:center;margin-top:10px"><button class="gbtn" id="dqUp">▲</button></div>
+      <div class="gctl" style="justify-content:center;margin-top:6px"><button class="gbtn" id="dqLeft">◀</button><button class="gbtn" id="dqAtk">⚔️</button><button class="gbtn" id="dqUse">Ⓔ</button><button class="gbtn" id="dqRight">▶</button></div>
+      <div class="gctl" style="justify-content:center;margin-top:6px"><button class="gbtn" id="dqDown">▼</button></div>
+      <div class="disc" id="dqResult" hidden></div>
+    </div>
+  </section>
+  <div class="disc">⚠️ Games are for fun only — simulated, no real money or tokens, nothing on-chain. The "Higher or Lower" charts use BC25's <b>Stage B paper-test</b> data (hypothetical; <b>past performance does not guarantee future results</b>). Not an offer, solicitation, or investment advice.</div>
+  <div class="foot">BC25 Defender Index · Bluechip Labs · arcade</div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/games.js"></script>
