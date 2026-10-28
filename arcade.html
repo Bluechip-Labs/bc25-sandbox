@@ -129,6 +129,18 @@
   .runoverlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(5,10,22,.58);border-radius:12px;text-align:center;padding:12px;color:#eaf0ff}
   .runoverlay.hide{display:none}
   #runL,#runJ,#runR{cursor:pointer;min-width:52px}
+  /* ---- Defender's Quest ---- */
+  .dqwrap{position:relative;max-width:480px;margin:10px auto 0}
+  .dqwrap canvas{width:100%;display:block;border-radius:12px;border:1px solid var(--line);background:#0c1430;touch-action:none}
+  .dqpanel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:rgba(7,12,28,.92);border-radius:12px;padding:16px;text-align:center;color:#eaf0ff;overflow:auto}
+  .dqpanel[hidden]{display:none}
+  .dqp-h{font-weight:800;font-size:16px;margin-bottom:6px}
+  .dqopt{display:block;width:100%;max-width:360px;margin:5px auto;background:var(--surface-2);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;font-weight:600;cursor:pointer}
+  .dqopt:hover{border-color:var(--gold)}
+  .dqrow{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;max-width:360px;margin:6px auto;padding:9px 11px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;font-size:13.5px;color:var(--fg)}
+  .dqrow .btn{width:auto;padding:7px 12px;font-size:13px;flex:none}
+  .dqrow .btn:disabled{opacity:.45}
+  #dqUp,#dqDown,#dqLeft,#dqRight,#dqAtk,#dqUse{min-width:54px;touch-action:manipulation;user-select:none}
 
   a.iconbtn{text-decoration:none;display:inline-flex;align-items:center;gap:4px}
   .arc-sub{color:var(--muted);font-size:13px;margin:-4px 0 14px}
@@ -145,6 +157,8 @@
     .gboard{gap:6px}
     .runwrap{max-width:320px}
     #runL,#runJ,#runR{min-width:46px}
+    .dqwrap{max-width:340px}
+    #dqUp,#dqDown,#dqLeft,#dqRight,#dqAtk,#dqUse{min-width:46px;padding:7px 9px}
   }
 </style>
 
@@ -154,7 +168,7 @@
     <a class="iconbtn" href="/index.html">← Sandbox</a>
   </header>
   <div class="mascot"><div class="face" id="mFace"><img src="/bull-logo.png" class="bullimg" alt=""></div><div class="say" id="mSay"><b>Welcome to the BC25 Arcade.</b> Pick a game below — all for fun, zero stakes. 🐂</div></div>
-  <p class="arc-sub">Three little crypto games. Scores save on this device. Back to the full sandbox anytime.</p>
+  <p class="arc-sub">Four little crypto games. Scores save on this device. Back to the full sandbox anytime.</p>
   <section data-view="games">
     <div class="card">
       <h2>🎮 BC25 Arcade</h2>
@@ -200,6 +214,21 @@
         <button class="gbtn" id="runJ">⤒ Jump</button>
         <button class="gbtn" id="runR">▶</button>
       </div>
+    </div>
+    <div class="card">
+      <h2>⚔️ Defender's Quest</h2>
+      <p class="muted sm">Guide the <b>blue BC25 Defender</b> through the Mempool Caverns to the Vault. Fight 🐻 bear-market beasts and 👺 FUD, dodge 🔺 spike traps and pits, answer the Oracle's riddle, grab 🪙 coins &amp; 💎 diamonds, upgrade armor &amp; sword at the 🔨 Forge — then slay <b>The Bear Market</b> and claim the vault. <b>Move:</b> arrows / WASD · <b>Attack:</b> Space or Z · <b>Use/Interact:</b> E.</p>
+      <div class="gstatus"><span id="dqHud" class="muted sm">❤❤❤</span><span class="turn">Score <b id="dqScore">0</b> · Best <b id="dqBest">0</b></span></div>
+      <div class="dqwrap">
+        <canvas id="dqCanvas" width="480" height="360"></canvas>
+        <div class="runoverlay" id="dqOverlay"><button class="btn" id="dqStart" style="width:auto">▶ Start the quest</button><div class="sm" id="dqMsg" style="margin-top:10px;opacity:.9"></div></div>
+        <div class="dqpanel" id="dqRiddle" hidden><div class="dqp-h" id="dqRiddleQ"></div><div id="dqRiddleOpts"></div></div>
+        <div class="dqpanel" id="dqShop" hidden><div class="dqp-h">🔨 Forge — spend 🪙 coins</div><div id="dqShopBody"></div><button class="btn sm" id="dqShopClose" style="width:auto;margin-top:10px">Leave forge</button></div>
+      </div>
+      <div class="gctl" style="justify-content:center;margin-top:10px"><button class="gbtn" id="dqUp">▲</button></div>
+      <div class="gctl" style="justify-content:center;margin-top:6px"><button class="gbtn" id="dqLeft">◀</button><button class="gbtn" id="dqAtk">⚔️</button><button class="gbtn" id="dqUse">Ⓔ</button><button class="gbtn" id="dqRight">▶</button></div>
+      <div class="gctl" style="justify-content:center;margin-top:6px"><button class="gbtn" id="dqDown">▼</button></div>
+      <div class="disc" id="dqResult" hidden></div>
     </div>
     <div class="card">
       <h3>🏆 High scores <span class="muted sm" id="gHsNote"></span></h3>
@@ -319,6 +348,8 @@
     var pb=((o.price||{}).best)||0,rb=((o.run||{}).best)||0;
     html+="<div class='ghrow'><span class='lab'>Higher or Lower</span><span>Best streak: <b>"+pb+"</b></span><span></span></div>";
     html+="<div class='ghrow'><span class='lab'>Bull Run</span><span>Best score: <b>"+rb+"</b></span><span></span></div>";
+    var qb=((o.quest||{}).best)||0;
+    html+="<div class='ghrow'><span class='lab'>Defender's Quest</span><span>Best score: <b>"+qb+"</b></span><span></span></div>";
     document.getElementById("gHigh").innerHTML=html;
     var nn=document.getElementById("gHsNote");if(nn)nn.textContent="(saved on this device)";
   }
@@ -486,6 +517,317 @@
   var gDiffEl=document.getElementById("gDiff");if(gDiffEl)gDiffEl.addEventListener("click",function(e){var b=e.target.closest(".gbtn");if(!b)return;gSetActive("gDiff",b);gDiff=b.getAttribute("data-diff");newGame();});
   var gModeEl=document.getElementById("gMode");if(gModeEl)gModeEl.addEventListener("click",function(e){var b=e.target.closest(".gbtn");if(!b)return;gSetActive("gMode",b);gMode=b.getAttribute("data-mode");newGame();});
   var gNewEl=document.getElementById("gNew");if(gNewEl)gNewEl.addEventListener("click",newGame);
+  // ================= Game 4: Defender's Quest (top-down Zelda-like) =================
+  var DQ_MAPS=[
+    ["################",
+     "#P.....C#..C..b#",
+     "#..F....#....$.#",
+     "#.......#......#",
+     "#...b...#..C...#",
+     "#.O.....G......#",
+     "#.......G....C.#",
+     "#...C...#......#",
+     "#.......#.....>#",
+     "#..b...C#......#",
+     "#.......#...C..#",
+     "################"],
+    ["################",
+     "#g....C.....~~.#",
+     "#...SS....~~..>#",
+     "#....SS...~~...#",
+     "#C....g....C...#",
+     "#..~~.....SS...#",
+     "#..~~..K..SS...#",
+     "#.........g....#",
+     "#<....C....$...#",
+     "#...SS.........#",
+     "#.g....C....C..#",
+     "################"],
+    ["################",
+     "#<...c....C#...#",
+     "#...F......#...#",
+     "#.....SS...#...#",
+     "#C....SS..c#...#",
+     "#..........#..C#",
+     "#....c.....G..>#",
+     "#.....SS...#...#",
+     "#C.........#...#",
+     "#..~~......#...#",
+     "#.c....C..$#...#",
+     "################"],
+    ["################",
+     "#..............#",
+     "#....C....C....#",
+     "#..............#",
+     "#..............#",
+     "#......B.......#",
+     "#<.............#",
+     "#..............#",
+     "#...C......C...#",
+     "#..............#",
+     "#..............#",
+     "################"]
+  ];
+  var DQ_ROOMNAMES=["Oracle Gate","Mempool Caverns","Vault Approach","The Bear Market's Lair"];
+  var DQ_RIDDLES=[
+    {q:"I have no bank and no CEO. My ledger is public, my supply is fixed at 21 million. What am I?",a:0,opts:["Bitcoin","A checking account","A company stock"]},
+    {q:"Investors lose their nerve and sell everything on the way down. Three letters name this panic.",a:1,opts:["APY","FUD","NFT"]},
+    {q:"The only wallet a hacker can never reach over the internet. Which is it?",a:2,opts:["A hot wallet","An exchange account","A cold (offline) wallet"]}
+  ];
+  var DQ={on:false,cv:null,cx:null,raf:null,last:0,state:"title",
+    T:30,COLS:16,ROWS:12,room:0,rooms:null,
+    px:0,py:0,pr:11,spd:120,face:"down",atk:0,swing:0,inv:0,
+    hp:3,maxHp:3,coins:0,diamonds:0,hasKey:false,armor:0,sword:0,
+    key:{up:false,down:false,left:false,right:false},
+    score:0,best:0,visited:null,xcool:0,riddleIdx:0,bossMax:0};
+  DQ.cv=document.getElementById("dqCanvas");DQ.cx=DQ.cv?DQ.cv.getContext("2d"):null;
+  var DQ_COST_A=[20,45,80],DQ_COST_S=[25,55,95];
+  function dqBest(){var o=gLoad();return ((o.quest||{}).best)||0;}
+  function dqSaveBest(s){var o=gLoad();o.quest=o.quest||{};if(s>(o.quest.best||0)){o.quest.best=s;gStore(o);}renderHigh();}
+  function dqParse(){
+    DQ.rooms=DQ_MAPS.map(function(map,ri){
+      var grid=[],coins=[],dias=[],keys=[],mons=[],spikes=[],exitE=null,exitW=null,forge=[],oracle=null,boss=null,start=null,gate=null;
+      for(var y=0;y<map.length;y++){var row=map[y].split(""),g=[];
+        for(var x=0;x<row.length;x++){var ch=row[x],t=".";
+          if(ch==="#")t="#";else if(ch==="~")t="~";else if(ch==="S")t="S";
+          else if(ch==="F"){t="F";forge.push({x:x,y:y});}
+          else if(ch==="O"){t="O";oracle={x:x,y:y};}
+          else if(ch==="G"){t="G";gate={x:x,y:y};}
+          else if(ch===">"){t=">";exitE={x:x,y:y};}
+          else if(ch==="<"){t="<";exitW={x:x,y:y};}
+          else{ // floor + entity
+            if(ch==="C")coins.push({x:x,y:y});
+            else if(ch==="$")dias.push({x:x,y:y});
+            else if(ch==="K")keys.push({x:x,y:y});
+            else if(ch==="P")start={x:x,y:y};
+            else if(ch==="b")mons.push(dqMob("bear",x,y,ri));
+            else if(ch==="g")mons.push(dqMob("fud",x,y,ri));
+            else if(ch==="c")mons.push(dqMob("crab",x,y,ri));
+            else if(ch==="B")boss=dqBoss(x,y);
+          }
+          g.push(t);}
+        grid.push(g);}
+      return {grid:grid,coins:coins,dias:dias,keys:keys,mons:mons,forge:forge,oracle:oracle,gate:gate,
+              exitE:exitE,exitW:exitW,boss:boss,start:start,gateOpen:false,gateType:(ri===0?"riddle":"key"),treasure:null,cleared:false};
+    });
+  }
+  function dqMob(type,gx,gy,ri){var T=DQ.T,base={x:gx*T+T/2,y:gy*T+T/2,hit:-1};
+    if(type==="bear"){base.hp=2+ri;base.spd=42;base.dmg=1;base.r=13;base.emoji="🐻";}
+    else if(type==="fud"){base.hp=2;base.spd=58;base.dmg=1;base.r=11;base.emoji="👺";}
+    else{base.hp=2;base.spd=50;base.dmg=1;base.r=11;base.emoji="🦀";base.bob=Math.random()*6;}
+    base.type=type;return base;}
+  function dqBoss(gx,gy){var T=DQ.T;return {x:gx*T+T/2,y:gy*T+T/2,hp:16,maxhp:16,spd:38,dmg:1,r:22,hit:-1,type:"boss",emoji:"🐻"};}
+  function dqResetProgress(){
+    dqParse();DQ.room=0;DQ.coins=0;DQ.diamonds=0;DQ.hasKey=false;DQ.armor=0;DQ.sword=0;
+    DQ.hp=3;DQ.maxHp=3;DQ.score=0;DQ.inv=0;DQ.atk=0;DQ.face="down";DQ.xcool=0;
+    DQ.visited={0:true};DQ.best=dqBest();
+    var s=DQ.rooms[0].start||{x:1,y:1};DQ.px=s.x*DQ.T+DQ.T/2;DQ.py=s.y*DQ.T+DQ.T/2;
+    DQ.key={up:false,down:false,left:false,right:false};
+  }
+  function dqSolid(gx,gy){var r=DQ.rooms[DQ.room];if(gx<0||gy<0||gy>=r.grid.length||gx>=r.grid[0].length)return true;
+    var t=r.grid[gy][gx];if(t==="#"||t==="F"||t==="O"||t==="~")return true;if(t==="G"&&!r.gateOpen)return true;return false;}
+  function dqHitsWall(nx,ny){var T=DQ.T,r=DQ.pr;
+    var pts=[[nx-r,ny-r],[nx+r,ny-r],[nx-r,ny+r],[nx+r,ny+r]];
+    for(var i=0;i<pts.length;i++){if(dqSolid(Math.floor(pts[i][0]/T),Math.floor(pts[i][1]/T)))return true;}return false;}
+  function dqTileAt(x,y){var T=DQ.T,r=DQ.rooms[DQ.room];var gx=Math.floor(x/T),gy=Math.floor(y/T);
+    if(gy<0||gx<0||gy>=r.grid.length||gx>=r.grid[0].length)return ".";return r.grid[gy][gx];}
+  function dqGoRoom(dir){ // dir "E" -> next, "W" -> prev
+    var T=DQ.T;
+    if(dir==="E"){var nr=DQ.room+1;if(nr>=DQ.rooms.length)return;DQ.room=nr;DQ.visited[nr]=true;
+      var e=DQ.rooms[nr].exitW;DQ.px=(e?e.x:1)*T+T+2;DQ.py=(e?e.y:6)*T+T/2;}
+    else{var pr=DQ.room-1;if(pr<0)return;DQ.room=pr;DQ.visited[pr]=true;
+      var e2=DQ.rooms[pr].exitE;DQ.px=(e2?e2.x:14)*T-2;DQ.py=(e2?e2.y:6)*T+T/2;}
+    DQ.xcool=0.5;dqSay(DQ_ROOMNAMES[DQ.room]);
+  }
+  function dqSay(name){var el=document.getElementById("dqMsg");say("<b>"+name+"</b> — onward, Defender. 🛡️","🛡️");if(el)el.textContent=name;}
+  function dqNear(obj,maxT){if(!obj)return false;var T=DQ.T;var cx=obj.x*T+T/2,cy=obj.y*T+T/2;
+    return Math.hypot(cx-DQ.px,cy-DQ.py)<(maxT||1.4)*T;}
+  function dqInteract(){
+    if(DQ.state!=="play")return;var r=DQ.rooms[DQ.room];
+    if(r.oracle&&!r.gateOpen&&r.gateType==="riddle"&&dqNear(r.oracle,1.6)){dqOpenRiddle();return;}
+    for(var i=0;i<r.forge.length;i++){if(dqNear(r.forge[i],1.6)){dqOpenShop();return;}}
+    toast("Nothing to use here");
+  }
+  function dqOpenRiddle(){DQ.state="riddle";DQ.riddleIdx=DQ.room%DQ_RIDDLES.length;var rid=DQ_RIDDLES[DQ.riddleIdx];
+    document.getElementById("dqRiddleQ").textContent="🔮 "+rid.q;
+    document.getElementById("dqRiddleOpts").innerHTML=rid.opts.map(function(o,i){return '<button class="dqopt" data-i="'+i+'">'+o+'</button>';}).join("");
+    document.getElementById("dqRiddle").hidden=false;say("The Oracle poses a riddle…","🔮");}
+  function dqAnswer(i){var rid=DQ_RIDDLES[DQ.riddleIdx];document.getElementById("dqRiddle").hidden=true;DQ.state="play";
+    if(i===rid.a){DQ.rooms[DQ.room].gateOpen=true;toast("✅ Correct — the gate opens!");say("The gate grinds open. Well reasoned. 🛡️","🛡️");}
+    else{toast("❌ Not quite — try again");say("The Oracle shakes its head. Approach again to retry.","🔮");}
+  }
+  function dqOpenShop(){DQ.state="shop";dqRenderShop();document.getElementById("dqShop").hidden=false;say("The Forge glows. Spend your coins. 🔨","🔨");}
+  function dqRenderShop(){
+    var aMax=DQ.armor>=DQ_COST_A.length,sMax=DQ.sword>=DQ_COST_S.length;
+    var aCost=aMax?0:DQ_COST_A[DQ.armor],sCost=sMax?0:DQ_COST_S[DQ.sword];
+    var h="<div class='dqrow'><span>🪙 Coins: <b>"+DQ.coins+"</b></span><span>❤ Max HP "+DQ.maxHp+" · 🗡️ Dmg "+(1+DQ.sword)+"</span></div>";
+    h+="<div class='dqrow'><span>🛡️ Armor "+(aMax?"MAX":"Lv"+(DQ.armor+1)+" · +1 heart")+"</span>"+(aMax?"<span>—</span>":"<button class='btn' data-buy='armor' "+(DQ.coins<aCost?"disabled":"")+">"+aCost+" 🪙</button>")+"</div>";
+    h+="<div class='dqrow'><span>🗡️ Sword "+(sMax?"MAX":"Lv"+(DQ.sword+1)+" · +1 dmg")+"</span>"+(sMax?"<span>—</span>":"<button class='btn' data-buy='sword' "+(DQ.coins<sCost?"disabled":"")+">"+sCost+" 🪙</button>")+"</div>";
+    document.getElementById("dqShopBody").innerHTML=h;}
+  function dqBuy(what){
+    if(what==="armor"&&DQ.armor<DQ_COST_A.length&&DQ.coins>=DQ_COST_A[DQ.armor]){DQ.coins-=DQ_COST_A[DQ.armor];DQ.armor++;DQ.maxHp++;DQ.hp++;toast("🛡️ Armor upgraded");}
+    else if(what==="sword"&&DQ.sword<DQ_COST_S.length&&DQ.coins>=DQ_COST_S[DQ.sword]){DQ.coins-=DQ_COST_S[DQ.sword];DQ.sword++;toast("🗡️ Sword upgraded");}
+    dqRenderShop();dqSyncHud();}
+  function dqCloseShop(){document.getElementById("dqShop").hidden=true;DQ.state="play";}
+  function dqSyncHud(){
+    var hud=document.getElementById("dqHud");if(hud){var h="";for(var i=0;i<DQ.maxHp;i++)h+=(i<DQ.hp?"❤":"🖤");hud.innerHTML=h+" &nbsp; 🪙"+DQ.coins+" &nbsp; 💎"+DQ.diamonds+(DQ.hasKey?" &nbsp; 🔑":"");}
+    var vis=DQ.visited?Object.keys(DQ.visited).length:0;
+    DQ.score=DQ.coins*10+DQ.diamonds*50+vis*100+(DQ.rooms&&DQ.rooms[3]&&DQ.rooms[3].cleared?1000:0);
+    var sc=document.getElementById("dqScore");if(sc)sc.textContent=DQ.score;
+    var bs=document.getElementById("dqBest");if(bs)bs.textContent=Math.max(DQ.best,DQ.score);}
+  function dqHurt(dmg){if(DQ.inv>0)return;DQ.hp-=dmg;DQ.inv=1.0;dqSyncHud();
+    if(DQ.hp<=0){DQ.hp=0;dqOver(false);}else{say("Hit! Shields holding. 🛡️","😣");}}
+  function dqAttack(){if(DQ.state!=="play"||DQ.atk>0)return;DQ.atk=0.22;DQ.swing++;}
+  function dqSwingBox(){var T=DQ.T,reach=18+DQ.sword*5,w=20;
+    if(DQ.face==="up")return{x:DQ.px-w,y:DQ.py-DQ.pr-reach,w:w*2,h:reach};
+    if(DQ.face==="down")return{x:DQ.px-w,y:DQ.py+DQ.pr,w:w*2,h:reach};
+    if(DQ.face==="left")return{x:DQ.px-DQ.pr-reach,y:DQ.py-w,w:reach,h:w*2};
+    return{x:DQ.px+DQ.pr,y:DQ.py-w,w:reach,h:w*2};}
+  function dqCircleRect(cx,cy,cr,r){var nx=Math.max(r.x,Math.min(cx,r.x+r.w)),ny=Math.max(r.y,Math.min(cy,r.y+r.h));return Math.hypot(cx-nx,cy-ny)<cr;}
+  function dqUpdate(dt){
+    var r=DQ.rooms[DQ.room],T=DQ.T;
+    if(DQ.inv>0)DQ.inv-=dt;if(DQ.atk>0)DQ.atk-=dt;if(DQ.xcool>0)DQ.xcool-=dt;
+    // movement
+    var vx=0,vy=0;if(DQ.key.left)vx-=1;if(DQ.key.right)vx+=1;if(DQ.key.up)vy-=1;if(DQ.key.down)vy+=1;
+    if(vx||vy){var m=Math.hypot(vx,vy);vx/=m;vy/=m;
+      if(Math.abs(vx)>Math.abs(vy))DQ.face=vx<0?"left":"right";else DQ.face=vy<0?"up":"down";
+      var nx=DQ.px+vx*DQ.spd*dt,ny=DQ.py+vy*DQ.spd*dt;
+      if(!dqHitsWall(nx,DQ.py))DQ.px=nx;if(!dqHitsWall(DQ.px,ny))DQ.py=ny;}
+    // spikes (toggle ~1.2s cycle, dangerous 0.5s)
+    var phase=(DQ.last/1000)%1.5,spikeOn=phase>1.0;
+    if(spikeOn&&dqTileAt(DQ.px,DQ.py)==="S")dqHurt(1);
+    // exits
+    if(DQ.xcool<=0){var tt=dqTileAt(DQ.px,DQ.py);if(tt===">")dqGoRoom("E");else if(tt==="<")dqGoRoom("W");}
+    // key gate (auto-open on contact)
+    if(r.gate&&!r.gateOpen&&r.gateType==="key"&&DQ.hasKey){
+      if(Math.hypot((r.gate.x+.5)*T-DQ.px,(r.gate.y+.5)*T-DQ.py)<1.3*T){r.gateOpen=true;DQ.hasKey=false;toast("🔑 The key turns — gate open!");dqSyncHud();}}
+    // pickups
+    function grab(list,rad,cb){for(var i=list.length-1;i>=0;i--){var o=list[i],cx=o.x*T+T/2,cy=o.y*T+T/2;
+      if(Math.hypot(cx-DQ.px,cy-DQ.py)<rad){list.splice(i,1);cb();}}}
+    grab(r.coins,17,function(){DQ.coins++;dqSyncHud();});
+    grab(r.dias,18,function(){DQ.diamonds++;toast("💎 Diamond!");dqSyncHud();});
+    grab(r.keys,18,function(){DQ.hasKey=true;toast("🔑 Private key acquired");dqSyncHud();});
+    if(r.treasure){var cx=r.treasure.x*T+T/2,cy=r.treasure.y*T+T/2;if(Math.hypot(cx-DQ.px,cy-DQ.py)<20){dqOver(true);return;}}
+    // monsters
+    var swbox=DQ.atk>0?dqSwingBox():null;
+    for(var i=r.mons.length-1;i>=0;i--){var mo=r.mons[i];
+      var dx=DQ.px-mo.x,dy=DQ.py-mo.y,d=Math.hypot(dx,dy)||1;
+      if(mo.type==="crab"){mo.bob+=dt*3;mo.x+=Math.cos(mo.bob)*mo.spd*dt;}
+      else{mo.x+=dx/d*mo.spd*dt;mo.y+=dy/d*mo.spd*dt;}
+      // keep off walls
+      if(dqSolidPt(mo.x,mo.y)){mo.x-=dx/d*mo.spd*dt;mo.y-=dy/d*mo.spd*dt;}
+      if(d<mo.r+DQ.pr)dqHurt(mo.dmg);
+      if(swbox&&mo.hit!==DQ.swing&&dqCircleRect(mo.x,mo.y,mo.r,swbox)){mo.hit=DQ.swing;mo.hp-=(1+DQ.sword);
+        if(mo.hp<=0){r.mons.splice(i,1);if(Math.random()<0.5){r.coins.push({x:Math.round((mo.x-T/2)/T),y:Math.round((mo.y-T/2)/T)});}DQ.coins+=1;dqSyncHud();}}}
+    // boss
+    if(r.boss){var bo=r.boss,bdx=DQ.px-bo.x,bdy=DQ.py-bo.y,bd=Math.hypot(bdx,bdy)||1;
+      bo.x+=bdx/bd*bo.spd*dt;bo.y+=bdy/bd*bo.spd*dt;if(dqSolidPt(bo.x,bo.y)){bo.x-=bdx/bd*bo.spd*dt;bo.y-=bdy/bd*bo.spd*dt;}
+      if(bd<bo.r+DQ.pr)dqHurt(bo.dmg);
+      if(swbox&&bo.hit!==DQ.swing&&dqCircleRect(bo.x,bo.y,bo.r,swbox)){bo.hit=DQ.swing;bo.hp-=(1+DQ.sword);
+        if(bo.hp<=0){r.boss=null;r.cleared=true;r.treasure={x:Math.round((bo.x-T/2)/T),y:Math.round((bo.y-T/2)/T)};toast("The Bear Market falls!");say("The Bear Market is slain — claim the vault! 🐂","🐂");dqSyncHud();}}}
+  }
+  function dqSolidPt(x,y){return dqSolid(Math.floor(x/DQ.T),Math.floor(y/DQ.T));}
+  function dqDraw(){
+    var cx=DQ.cx,T=DQ.T,r=DQ.rooms?DQ.rooms[DQ.room]:null;if(!cx)return;
+    cx.clearRect(0,0,DQ.cv.width,DQ.cv.height);
+    if(!r){return;}
+    var phase=(DQ.last/1000)%1.5,spikeOn=phase>1.0;
+    for(var y=0;y<r.grid.length;y++)for(var x=0;x<r.grid[0].length;x++){var t=r.grid[y][x],px=x*T,py=y*T;
+      if(t==="#"){cx.fillStyle="#1b2a4a";cx.fillRect(px,py,T,T);cx.fillStyle="#24375f";cx.fillRect(px+2,py+2,T-4,T-4);}
+      else{cx.fillStyle=((x+y)%2?"#101c38":"#0d1832");cx.fillRect(px,py,T,T);}
+      if(t==="~"){cx.fillStyle="#060a16";cx.fillRect(px+3,py+3,T-6,T-6);cx.fillStyle="#d1495b";cx.font="13px sans-serif";cx.fillText("⚠",px+8,py+20);}
+      else if(t==="S"){cx.fillStyle=spikeOn?"#e05a6b":"#39507e";cx.font="18px sans-serif";cx.textAlign="center";cx.fillText(spikeOn?"🔺":"▫",px+T/2,py+T-8);cx.textAlign="left";}
+      else if(t==="G"&&!r.gateOpen){cx.fillStyle="#caa33a";cx.fillRect(px+3,py,T-6,T);cx.fillStyle="#201700";cx.font="14px sans-serif";cx.fillText(r.gateType==="key"?"🔒":"⛩",px+6,py+20);}
+      else if(t===">"||t==="<"){cx.fillStyle="#0a1326";cx.fillRect(px+2,py+2,T-4,T-4);cx.fillStyle="#9fb4e0";cx.font="16px sans-serif";cx.textAlign="center";cx.fillText(t===">"?"➡":"⬅",px+T/2,py+T/2+6);cx.textAlign="left";}
+      else if(t==="F"){cx.font="20px sans-serif";cx.textAlign="center";cx.fillText("🔨",px+T/2,py+T/2+7);cx.textAlign="left";}
+      else if(t==="O"){cx.font="20px sans-serif";cx.textAlign="center";cx.fillText("🔮",px+T/2,py+T/2+7);cx.textAlign="left";}
+    }
+    cx.textAlign="center";cx.textBaseline="middle";cx.font="19px sans-serif";
+    r.coins.forEach(function(o){cx.fillText("🪙",o.x*T+T/2,o.y*T+T/2);});
+    r.dias.forEach(function(o){cx.fillText("💎",o.x*T+T/2,o.y*T+T/2);});
+    r.keys.forEach(function(o){cx.fillText("🔑",o.x*T+T/2,o.y*T+T/2);});
+    if(r.treasure){cx.font="24px sans-serif";cx.fillText("🏆",r.treasure.x*T+T/2,r.treasure.y*T+T/2);cx.font="19px sans-serif";}
+    r.mons.forEach(function(m){cx.font="20px sans-serif";cx.fillText(m.emoji,m.x,m.y);});
+    if(r.boss){cx.font="40px sans-serif";cx.fillText("🐻",r.boss.x,r.boss.y);
+      // boss hp bar
+      cx.fillStyle="#2a3550";cx.fillRect(r.boss.x-30,r.boss.y-34,60,6);cx.fillStyle="#d1495b";cx.fillRect(r.boss.x-30,r.boss.y-34,60*Math.max(0,r.boss.hp/r.boss.maxhp),6);}
+    cx.textAlign="left";cx.textBaseline="alphabetic";
+    // player — blue knight
+    dqDrawKnight(cx,DQ.px,DQ.py);
+    // swing arc
+    if(DQ.atk>0){var b=dqSwingBox();cx.fillStyle="rgba(140,180,255,.55)";cx.fillRect(b.x,b.y,b.w,b.h);}
+  }
+  function dqDrawKnight(cx,x,y){
+    var flick=DQ.inv>0&&Math.floor(DQ.last/80)%2===0;if(flick)return;
+    cx.save();cx.translate(x,y);
+    cx.fillStyle="#16305e";cx.beginPath();cx.arc(0,2,11,0,7);cx.fill(); // body
+    cx.fillStyle="#2f6fd0";cx.beginPath();cx.arc(0,-6,7,0,7);cx.fill(); // helmet
+    cx.fillStyle="#caa33a";cx.fillRect(-8,-9,16,3); // visor band gold
+    // shield in facing dir
+    cx.fillStyle="#d9b24a";var sx=0,sy=0;if(DQ.face==="left")sx=-11;else if(DQ.face==="right")sx=11;else if(DQ.face==="up")sy=-11;else sy=11;
+    cx.beginPath();cx.arc(sx,sy,5,0,7);cx.fill();cx.fillStyle="#201700";cx.font="7px sans-serif";cx.textAlign="center";cx.fillText("B",sx,sy+2.5);
+    cx.restore();
+  }
+  function dqOver(win){
+    DQ.state=win?"win":"over";cancelAnimationFrame(DQ.raf);DQ.raf=null;
+    DQ.score=DQ.coins*10+DQ.diamonds*50+Object.keys(DQ.visited).length*100+(win?1000:0);
+    dqSaveBest(DQ.score);DQ.best=dqBest();dqSyncHud();
+    var ov=document.getElementById("dqOverlay"),ms=document.getElementById("dqMsg"),st=document.getElementById("dqStart");
+    ov.classList.remove("hide");st.textContent="▶ Play again";
+    ms.innerHTML=win?("🏆 <b>Vault secured!</b> Score "+DQ.score+" (🪙"+DQ.coins+" · 💎"+DQ.diamonds+")"):("💀 <b>The bears won this run.</b> Score "+DQ.score);
+    var res=document.getElementById("dqResult");if(res){res.hidden=false;res.innerHTML=win?"You guided the BC25 Defender to the vault — that's the whole idea: <b>survive the bears, protect the bags.</b>":"Down but not out. Upgrade armor &amp; sword at the Forge and try again.";}
+    say(win?"Vault secured. Lose less, last longer. 🐂🛡️":"The bears got us. Run it back! 🐻","🛡️");
+  }
+  function dqLoop(ts){
+    if(DQ.state!=="play"){DQ.raf=null;return;}
+    if(!DQ.last)DQ.last=ts;var dt=Math.min(0.05,(ts-DQ.last)/1000);DQ.last=ts;
+    dqUpdate(dt);dqDraw();DQ.raf=requestAnimationFrame(dqLoop);
+  }
+  function dqStartGame(){
+    dqResetProgress();DQ.state="play";DQ.last=0;dqSyncHud();
+    document.getElementById("dqOverlay").classList.add("hide");
+    document.getElementById("dqRiddle").hidden=true;document.getElementById("dqShop").hidden=true;
+    var res=document.getElementById("dqResult");if(res)res.hidden=true;
+    say("The quest begins in the "+DQ_ROOMNAMES[0]+". 🛡️","🛡️");
+    if(DQ.raf)cancelAnimationFrame(DQ.raf);DQ.raf=requestAnimationFrame(dqLoop);
+  }
+  function dqPause(){if(DQ.state==="play"){DQ.state="paused";if(DQ.raf)cancelAnimationFrame(DQ.raf);DQ.raf=null;
+    var ov=document.getElementById("dqOverlay"),ms=document.getElementById("dqMsg"),st=document.getElementById("dqStart");
+    if(ov){ov.classList.remove("hide");st.textContent="▶ Resume";ms.textContent="Paused";}}}
+  function dqResume(){if(DQ.state==="paused"){DQ.state="play";document.getElementById("dqOverlay").classList.add("hide");DQ.last=0;DQ.raf=requestAnimationFrame(dqLoop);}}
+  function dqIdleDraw(){if(!DQ.rooms)dqParse();DQ.best=dqBest();dqDraw();dqSyncHud();}
+  // DQ input
+  document.addEventListener("keydown",function(e){
+    if(!isGamesView())return;
+    if(DQ.state==="riddle"||DQ.state==="shop")return;
+    if(DQ.state!=="play")return;
+    var k=e.key;
+    if(k==="ArrowLeft"||k==="a"||k==="A"){DQ.key.left=true;e.preventDefault();}
+    else if(k==="ArrowRight"||k==="d"||k==="D"){DQ.key.right=true;e.preventDefault();}
+    else if(k==="ArrowUp"||k==="w"||k==="W"){DQ.key.up=true;e.preventDefault();}
+    else if(k==="ArrowDown"||k==="s"||k==="S"){DQ.key.down=true;e.preventDefault();}
+    else if(k===" "||k==="z"||k==="Z"){dqAttack();e.preventDefault();}
+    else if(k==="e"||k==="E"){dqInteract();e.preventDefault();}
+  });
+  document.addEventListener("keyup",function(e){
+    var k=e.key;
+    if(k==="ArrowLeft"||k==="a"||k==="A")DQ.key.left=false;
+    else if(k==="ArrowRight"||k==="d"||k==="D")DQ.key.right=false;
+    else if(k==="ArrowUp"||k==="w"||k==="W")DQ.key.up=false;
+    else if(k==="ArrowDown"||k==="s"||k==="S")DQ.key.down=false;
+  });
+  function dqHold(id,dir){var b=document.getElementById(id);if(!b)return;
+    function on(e){e.preventDefault();DQ.key[dir]=true;}function off(){DQ.key[dir]=false;}
+    b.addEventListener("pointerdown",on);b.addEventListener("pointerup",off);b.addEventListener("pointerleave",off);b.addEventListener("pointercancel",off);}
+  dqHold("dqUp","up");dqHold("dqDown","down");dqHold("dqLeft","left");dqHold("dqRight","right");
+  var dqA=document.getElementById("dqAtk");if(dqA)dqA.addEventListener("click",function(e){e.preventDefault();dqAttack();});
+  var dqE=document.getElementById("dqUse");if(dqE)dqE.addEventListener("click",function(e){e.preventDefault();dqInteract();});
+  var dqSt=document.getElementById("dqStart");if(dqSt)dqSt.addEventListener("click",function(){if(DQ.state==="paused")dqResume();else dqStartGame();});
+  var dqRO=document.getElementById("dqRiddleOpts");if(dqRO)dqRO.addEventListener("click",function(e){var b=e.target.closest(".dqopt");if(!b)return;dqAnswer(+b.getAttribute("data-i"));});
+  var dqSB=document.getElementById("dqShopBody");if(dqSB)dqSB.addEventListener("click",function(e){var b=e.target.closest("[data-buy]");if(!b||b.disabled)return;dqBuy(b.getAttribute("data-buy"));});
+  var dqSC=document.getElementById("dqShopClose");if(dqSC)dqSC.addEventListener("click",dqCloseShop);
+  document.addEventListener("visibilitychange",function(){if(document.hidden)dqPause();});
+
   // init
-  newGame();pgStart();runLoadBest();runIdleDraw();renderHigh();updateStatus();loadStageB();
+  newGame();pgStart();runLoadBest();runIdleDraw();renderHigh();updateStatus();loadStageB();dqIdleDraw();
 })();</script>
