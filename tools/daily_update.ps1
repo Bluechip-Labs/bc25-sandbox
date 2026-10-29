@@ -1,5 +1,5 @@
 <#
-  daily_update.ps1 — BC25 Sandbox daily data refresh.
+  daily_update.ps1 - BC25 Sandbox daily data refresh.
 
   Chains:  run the xv31 Stage B engine  ->  regenerate stageb.json from the
   newest run  ->  commit + push stageb.json (only if it changed).
@@ -30,7 +30,7 @@ try {
   # 1) run the engine -> writes a fresh dated run under xv31_paper_main_output
   Log "step 1/3: running engine ($EngineRun)"
   & $EngineRun
-  if ($LASTEXITCODE -ne 0) { throw "engine run failed (exit $LASTEXITCODE) — see $Engine\xv31_run.log" }
+  if ($LASTEXITCODE -ne 0) { throw "engine run failed (exit $LASTEXITCODE) - see $Engine\xv31_run.log" }
 
   # 2) regenerate stageb.json from the newest run (reads derived CSVs only)
   Log "step 2/3: regenerating stageb.json"
@@ -47,7 +47,7 @@ try {
     git push | Out-Null
     Log "pushed stageb.json (asof $asof)"
   } else {
-    Log "stageb.json unchanged — nothing to publish"
+    Log "stageb.json unchanged - nothing to publish"
   }
 
   Log "=== daily_update done ==="
