@@ -1,0 +1,64 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Defender's Duel · BC25 Old School Arcade</title>
+<link rel="stylesheet" href="/arcade.css">
+<script defer src="/analytics.js"></script>
+<style>
+  .fgwrap{max-width:760px}
+  .fgstage{background:#05070f;border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:var(--shadow)}
+  #fgCanvas{display:block;width:100%;height:auto;image-rendering:auto;border-radius:8px;background:#05070f;touch-action:none}
+  .fgpad{display:none;margin-top:10px;gap:10px;justify-content:space-between;align-items:center;user-select:none;-webkit-user-select:none}
+  .fgcol{display:grid;gap:8px}
+  .dpad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);gap:6px}
+  .abtns{display:grid;grid-template-columns:repeat(2,64px);grid-template-rows:repeat(2,64px);gap:8px}
+  .fgbtn{background:var(--surface);border:1px solid var(--line);border-radius:12px;color:var(--ink);font-weight:800;font-size:15px;
+         display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);cursor:pointer}
+  .fgbtn:active{background:var(--gold);color:#1a1300}
+  .fgbtn.wide{grid-column:span 2}
+  .abtns .fgbtn{font-size:18px}
+  .fgbtn.p{background:#1f3a8a;color:#fff}.fgbtn.k{background:#7a1020;color:#fff}.fgbtn.s{background:#f0b429;color:#1a1300}.fgbtn.sp{grid-column:span 2;background:#0e6b7a;color:#fff}
+  @media(max-width:760px){.fgpad{display:flex}}
+  .keyhint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .keyhint b{color:var(--ink)}
+</style>
+
+<div class="wrap fgwrap">
+  <header class="top">
+    <div class="brand"><img src="/coin-logo.png" class="logo-coin" alt="BC25"> BC25 Old School Arcade <span class="pill">Fighter</span></div>
+    <a class="iconbtn" href="/arcade.html">← Arcade</a>
+  </header>
+  <div class="mascot"><div class="face" id="mFace"><img src="/bull-logo.png" class="bullimg" alt=""></div>
+    <div class="say" id="mSay"><b>Defender's Duel.</b> You're the BC25 bull. Punch, kick, chain combos — clear the ladder. 🥊</div></div>
+
+  <div class="fgstage">
+    <canvas id="fgCanvas" width="720" height="360"></canvas>
+
+    <div class="fgpad">
+      <div class="fgcol">
+        <div class="dpad">
+          <div></div><div class="fgbtn" data-k="U">▲</div><div></div>
+          <div class="fgbtn" data-k="L">◀</div><div class="fgbtn" data-k="D">▼</div><div class="fgbtn" data-k="R">▶</div>
+          <div></div><div></div><div></div>
+        </div>
+      </div>
+      <div class="fgcol">
+        <div class="abtns">
+          <div class="fgbtn p" data-k="P">PUNCH</div>
+          <div class="fgbtn k" data-k="K">KICK</div>
+          <div class="fgbtn sp" data-k="S">SPECIAL</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="keyhint">
+    <b>Keyboard:</b> move <b>← →</b> · jump <b>↑/W</b> · crouch <b>↓/S</b> · punch <b>J/Z</b> · kick <b>K/X</b> · special <b>L/C</b> · block = hold <b>away</b> from your foe.
+    Combos: chain <b>P-P-P</b> or <b>P-K</b>; low attacks <b>↓+P/K</b>; jump-in <b>↑ then P/K</b>. Special needs a full meter.
+  </div>
+
+  <div class="disc">⚠️ For fun only — simulated 2D fighter, no real money or tokens, nothing on-chain. Characters are stylized mascots. Not an offer, solicitation, or investment advice.</div>
+  <div class="foot">BC25 Defender Index · Bluechip Labs · arcade</div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/fighter.js"></script>

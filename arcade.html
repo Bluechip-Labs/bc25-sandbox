@@ -11,9 +11,10 @@
     <a class="iconbtn" href="/index.html">← Sandbox</a>
   </header>
   <div class="mascot"><div class="face" id="mFace"><img src="/bull-logo.png" class="bullimg" alt=""></div><div class="say" id="mSay"><b>Welcome to the BC25 Old School Arcade.</b> Pick a game — all for fun, zero stakes. 🐂</div></div>
-  <p class="arc-sub">Four little crypto games. Tap a tile to play. Scores save on this device.</p>
+  <p class="arc-sub">Five little crypto games. Tap a tile to play. Scores save on this device.</p>
   <div class="tilegrid">
     <a class="gtile" href="/quest.html"><div class="gt-ic">⚔️</div><div class="gt-name">Defender's Quest</div><div class="gt-desc">Explore dungeons, fight the bears, solve the Oracle's riddles, claim the vault.</div></a>
+    <a class="gtile" href="/fighter.html"><div class="gt-ic">🥊</div><div class="gt-name">Defender's Duel</div><div class="gt-desc">80s side-view fighter. Play the BC25 bull, clear the ladder of crypto rivals.</div></a>
     <a class="gtile" href="/run.html"><div class="gt-ic">🏃</div><div class="gt-name">Bull Run</div><div class="gt-desc">Dodge bears, jump the dips, grab coins. How far can the bull run?</div></a>
     <a class="gtile" href="/match.html"><div class="gt-ic">🧠</div><div class="gt-name">Crypto Match</div><div class="gt-desc">Flip cards and pair the degen icons. Solo against the clock, or vs the bot.</div></a>
     <a class="gtile" href="/guess.html"><div class="gt-ic">📈</div><div class="gt-name">Higher or Lower</div><div class="gt-desc">Real Stage B charts — call whether it closed higher or lower a week later.</div></a>
@@ -32,6 +33,7 @@
     var solo=s.bestMoves!=null?(s.bestMoves+" mv · "+(s.bestMs/1000).toFixed(1)+"s"):"—";
     h+="<div class='ghrow'><span class='lab'>Match · "+d[1]+"</span><span>Solo: <b>"+solo+"</b></span><span>vs Bot: <b>"+c.w+"–"+c.l+(c.t?"–"+c.t:"")+"</b></span></div>";});
   h+="<div class='ghrow'><span class='lab'>Defender's Quest</span><span>Best score: <b>"+(((o.quest||{}).best)||0)+"</b></span><span></span></div>";
+  var fg=o.fight||{};h+="<div class='ghrow'><span class='lab'>Defender's Duel</span><span>Ladder: <b>"+((fg.best)||0)+"/5</b></span><span>"+(fg.clears?"Champion ×"+fg.clears:"")+"</span></div>";
   h+="<div class='ghrow'><span class='lab'>Bull Run</span><span>Best score: <b>"+(((o.run||{}).best)||0)+"</b></span><span></span></div>";
   h+="<div class='ghrow'><span class='lab'>Higher or Lower</span><span>Best streak: <b>"+(((o.price||{}).best)||0)+"</b></span><span></span></div>";
   var gh=document.getElementById("gHigh");if(gh)gh.innerHTML=h;
