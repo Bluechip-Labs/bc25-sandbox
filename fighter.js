@@ -458,22 +458,17 @@ function drawFighter(f){
   if(p.down){ drawDowned(f,col,acc,dark,edge,eye); ctx.restore(); return; }
   var shColY=hipY-56; // shoulder y
   if(f.key==="bull") drawBullCape(shColY,hipY,f.animT); // cape trails behind the body
+  else drawOppBack(f,shColY,hipY,f.animT,col,acc,dark); // per-opponent back layer (cape/fin/wisp/boulders)
+  var noLegs=(f.key==="fud"); // the wraith floats on a wisp tail instead of legs
   // BACK leg + BACK arm first (behind torso)
-  limb(0,hipY, Math.PI/2+p.legB, 26, p.kneeB, 26, 11,8, shade(col,-18),shade(dark,-18),shade(edge,-18));
+  if(!noLegs) limb(0,hipY, Math.PI/2+p.legB, 26, p.kneeB, 26, 11,8, shade(col,-18),shade(dark,-18),shade(edge,-18));
   limb(2,shColY, Math.PI/2+p.armB, 22, p.elbowB, 20, 9,6, shade(col,-14),shade(dark,-14),shade(edge,-14));
   // TORSO
   drawTorso(f,hipY,shColY,col,acc,dark,edge,p);
   // FRONT leg + FRONT arm
-  var fleg=limb(0,hipY, Math.PI/2+p.legF, 27, p.kneeF, 27, 12,9, col,dark,edge);
-  if(f.key==="bull"){ // gold greave + boot
-    ctx.strokeStyle="rgba(0,0,0,.5)";ctx.lineWidth=1.5;
-    ctx.fillStyle=shade(acc,-8);ctx.beginPath();ctx.arc(fleg.jx,fleg.jy,5.5,0,7);ctx.fill();ctx.stroke(); // knee guard
-    ctx.fillStyle=acc;ctx.beginPath();ctx.ellipse(fleg.ex,fleg.ey,9,6,0,0,7);ctx.fill();ctx.stroke(); // boot
-  }
+  if(!noLegs){ var fleg=limb(0,hipY, Math.PI/2+p.legF, 27, p.kneeF, 27, 12,9, col,dark,edge); drawFoot(f,fleg,col,acc,dark); }
   var arm=limb(3,shColY, Math.PI/2+p.armF, 23, p.elbowF, 21, 10,7, col,dark,edge);
-  // fist/foot accents
-  ctx.fillStyle=acc;ctx.beginPath();ctx.arc(arm.ex,arm.ey,7,0,7);ctx.fill();ctx.strokeStyle="rgba(0,0,0,.5)";ctx.stroke();
-  if(f.key==="bull"){ ctx.fillStyle=shade(acc,-8);ctx.beginPath();ctx.arc(arm.jx,arm.jy,5,0,7);ctx.fill();ctx.stroke(); } // forearm gauntlet
+  drawFist(f,arm,col,acc,dark,eye);
   // HEAD + per-character
   drawHead(f,shColY,col,acc,dark,edge,eye,p);
   ctx.restore();
@@ -504,10 +499,33 @@ function drawTorso(f,hipY,shY,col,acc,dark,edge,p){
     ctx.fillStyle=shade(acc,-34);ctx.beginPath();ctx.arc(0,hipY-4.5,4,0,7);ctx.fill();
     // shoulder pauldrons (layered)
     pauldron(-wTop,shY+6,acc);pauldron(wTop,shY+6,acc);
-  }else if(b==="titan"||b==="brute"){
-    ctx.fillStyle=shade(acc,-10);roundRectPath(-wTop*0.7,shY+6,wTop*1.4,14,6);ctx.globalAlpha=0.8;ctx.fill();ctx.globalAlpha=1;
+  }else if(f.key==="bear"){
+    // dark chest fur + red down-arrow (bear market)
+    ctx.fillStyle=shade(col,-24);ctx.globalAlpha=0.85;roundRectPath(-wTop*0.62,shY+6,wTop*1.24,hipY-shY-6,8);ctx.fill();ctx.globalAlpha=1;
+    ctx.fillStyle="#e74c3c";ctx.strokeStyle="rgba(0,0,0,.4)";ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(-10,shY+14);ctx.lineTo(10,shY+14);ctx.lineTo(0,shY+31);ctx.closePath();ctx.fill();ctx.stroke();
+    pauldron(-wTop,shY+6,shade(col,-18));pauldron(wTop,shY+6,shade(col,-18));
+  }else if(f.key==="whale"){
+    // pale belly plates + cyan droplet sigil
+    ctx.fillStyle=shade(acc,-6);ctx.globalAlpha=0.85;roundRectPath(-wBot*0.95,shY+8,wBot*1.9,hipY-shY-8,10);ctx.fill();ctx.globalAlpha=1;
+    ctx.strokeStyle="rgba(0,0,0,.18)";ctx.lineWidth=1.5;
+    for(var bi=1;bi<4;bi++){var yy=shY+8+bi*((hipY-shY)/4);ctx.beginPath();ctx.moveTo(-wBot*0.8,yy);ctx.lineTo(wBot*0.8,yy);ctx.stroke();}
+    var weye=f.c.pal[3];ctx.fillStyle=weye;ctx.beginPath();ctx.moveTo(0,shY+15);ctx.quadraticCurveTo(7,shY+24,0,shY+29);ctx.quadraticCurveTo(-7,shY+24,0,shY+15);ctx.closePath();ctx.fill();
+  }else if(f.key==="gas"){
+    // glowing lava cracks + molten core
+    ctx.strokeStyle="#ffb020";ctx.lineWidth=2;ctx.globalAlpha=0.9;
+    ctx.beginPath();ctx.moveTo(-11,shY+8);ctx.lineTo(-3,shY+20);ctx.lineTo(-9,hipY-6);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(11,shY+10);ctx.lineTo(4,shY+24);ctx.lineTo(10,hipY-8);ctx.stroke();ctx.globalAlpha=1;
+    var cg=ctx.createRadialGradient(0,shY+20,1,0,shY+20,13);cg.addColorStop(0,"#fff3c0");cg.addColorStop(0.5,"#ffb020");cg.addColorStop(1,"rgba(255,120,0,0)");
+    ctx.fillStyle=cg;ctx.beginPath();ctx.arc(0,shY+20,13,0,7);ctx.fill();
+    ctx.fillStyle=shade(col,-22);ctx.beginPath();ctx.arc(-wTop+4,shY+4,8,0,7);ctx.arc(wTop-4,shY+4,7,0,7);ctx.fill(); // rock shoulders
+  }else if(f.key==="fud"){
+    // faint spectral sheen over torso
+    ctx.globalAlpha=0.22;ctx.fillStyle=acc;roundRectPath(-wTop*0.5,shY+8,wTop,hipY-shY-8,8);ctx.fill();ctx.globalAlpha=1;
   }else if(f.key==="rug"){
-    ctx.fillStyle=acc;roundRectPath(-wTop*0.8,shY+4,wTop*1.6,hipY-shY-2,6);ctx.globalAlpha=0.9;ctx.fill();ctx.globalAlpha=1; // cloak
+    ctx.fillStyle=acc;ctx.globalAlpha=0.92;roundRectPath(-wTop*0.8,shY+4,wTop*1.6,hipY-shY-2,6);ctx.fill();ctx.globalAlpha=1; // cloak
+    ctx.fillStyle=shade(col,-8);ctx.globalAlpha=0.55;roundRectPath(-wTop*0.5,shY+6,wTop,10,4);ctx.fill();ctx.globalAlpha=1; // collar shadow
+    ctx.strokeStyle="rgba(255,60,60,.3)";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,shY+8);ctx.lineTo(0,hipY-4);ctx.stroke(); // cloak seam
   }
   ctx.restore();
 }
@@ -539,37 +557,55 @@ function drawHead(f,shY,col,acc,dark,edge,eye,p){
     // nostrils
     ctx.fillStyle="#061030";ctx.beginPath();ctx.arc(hx+20,hy+6,1.7,0,7);ctx.fill();ctx.arc(hx+13,hy+7,1.7,0,7);ctx.fill();
   }else if(f.key==="bear"){
-    ctx.fillStyle=col;ctx.strokeStyle="rgba(0,0,0,.55)";ctx.lineWidth=2.5;
-    ctx.beginPath();ctx.arc(hx+4,hy,15,0,7);ctx.fill();ctx.stroke();
-    ctx.beginPath();ctx.ellipse(hx+14,hy+5,8,7,0,0,7);ctx.fillStyle=shade(col,10);ctx.fill();ctx.stroke(); // snout
-    ctx.fillStyle=col;ctx.beginPath();ctx.arc(hx-5,hy-13,6,0,7);ctx.fill();ctx.stroke();ctx.beginPath();ctx.arc(hx+13,hy-13,6,0,7);ctx.fill();ctx.stroke(); // ears
-    ctx.fillStyle="#1a1008";ctx.beginPath();ctx.arc(hx+20,hy+5,2.4,0,7);ctx.fill(); // nose
-    glowEye(hx+8,hy-2,eye);
+    // round ears
+    ctx.fillStyle=shade(col,-8);ctx.strokeStyle="rgba(0,0,0,.6)";ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.arc(hx-6,hy-13,6,0,7);ctx.fill();ctx.stroke();ctx.beginPath();ctx.arc(hx+13,hy-13,6,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle="#2a1a0e";ctx.beginPath();ctx.arc(hx-6,hy-13,2.6,0,7);ctx.fill();ctx.beginPath();ctx.arc(hx+13,hy-13,2.6,0,7);ctx.fill();
+    // head + snout
+    ctx.fillStyle=col;ctx.strokeStyle="rgba(0,0,0,.6)";ctx.beginPath();ctx.arc(hx+4,hy,15,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle=shade(col,14);ctx.beginPath();ctx.ellipse(hx+15,hy+5,9,8,0,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle="#1a1008";ctx.beginPath();ctx.ellipse(hx+22,hy+4,3,2.4,0,0,7);ctx.fill(); // nose
+    // snarl + teeth
+    ctx.strokeStyle="#1a0e06";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(hx+9,hy+10);ctx.lineTo(hx+21,hy+9);ctx.stroke();
+    ctx.fillStyle="#fff";for(var ti=0;ti<3;ti++){ctx.beginPath();ctx.moveTo(hx+11+ti*4,hy+10);ctx.lineTo(hx+13+ti*4,hy+10);ctx.lineTo(hx+12+ti*4,hy+14);ctx.closePath();ctx.fill();}
+    ctx.strokeStyle="rgba(230,80,60,.7)";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(hx-2,hy-8);ctx.lineTo(hx+2,hy+4);ctx.stroke(); // scar
+    glowEye(hx+1,hy-3,eye);glowEye(hx+9,hy-3,eye);
   }else if(f.key==="rug"){
-    // hood with shadowed face + red eyes
-    ctx.fillStyle=acc;ctx.strokeStyle="rgba(0,0,0,.6)";ctx.lineWidth=2.5;
-    ctx.beginPath();ctx.moveTo(hx-12,hy+12);ctx.quadraticCurveTo(hx+4,hy-22,hx+20,hy+12);ctx.quadraticCurveTo(hx+4,hy+6,hx-12,hy+12);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.fillStyle="#0a0406";ctx.beginPath();ctx.ellipse(hx+4,hy+4,8,9,0,0,7);ctx.fill();
-    ctx.fillStyle=eye;ctx.beginPath();ctx.arc(hx+1,hy+3,1.8,0,7);ctx.fill();ctx.beginPath();ctx.arc(hx+8,hy+3,1.8,0,7);ctx.fill();
+    // deep hood
+    ctx.fillStyle=acc;ctx.strokeStyle="rgba(0,0,0,.65)";ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(hx-13,hy+14);ctx.quadraticCurveTo(hx-14,hy-20,hx+4,hy-22);ctx.quadraticCurveTo(hx+22,hy-20,hx+21,hy+14);
+    ctx.quadraticCurveTo(hx+4,hy+4,hx-13,hy+14);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.strokeStyle="rgba(255,60,60,.4)";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(hx-9,hy+8);ctx.quadraticCurveTo(hx+4,hy-14,hx+17,hy+8);ctx.stroke(); // rim glow
+    ctx.fillStyle="#07030a";ctx.beginPath();ctx.ellipse(hx+4,hy+2,8,10,0,0,7);ctx.fill(); // face void
+    glowEye(hx+1,hy+1,eye);glowEye(hx+8,hy+1,eye);
   }else if(f.key==="whale"){
     ctx.fillStyle=col;ctx.strokeStyle="rgba(0,0,0,.55)";ctx.lineWidth=2.5;
-    ctx.beginPath();ctx.ellipse(hx+6,hy,17,13,0,0,7);ctx.fill();ctx.stroke(); // big head
-    ctx.beginPath();ctx.moveTo(hx-6,hy-12);ctx.quadraticCurveTo(hx-2,hy-24,hx+6,hy-13);ctx.closePath();ctx.fillStyle=acc;ctx.fill();ctx.stroke(); // spout fin
-    glowEye(hx+10,hy-1,eye);
-    ctx.strokeStyle="rgba(0,0,0,.3)";ctx.beginPath();ctx.moveTo(hx+16,hy+6);ctx.lineTo(hx-2,hy+8);ctx.stroke(); // mouth line
+    ctx.beginPath();ctx.ellipse(hx+6,hy,18,14,0,0,7);ctx.fill();ctx.stroke(); // big head
+    // spout mist
+    ctx.strokeStyle=acc;ctx.globalAlpha=0.6;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(hx-2,hy-14);ctx.quadraticCurveTo(hx-8,hy-26,hx-2,hy-30);ctx.moveTo(hx-2,hy-14);ctx.quadraticCurveTo(hx+5,hy-26,hx+1,hy-30);ctx.stroke();ctx.globalAlpha=1;
+    ctx.fillStyle=acc;ctx.beginPath();ctx.moveTo(hx-6,hy-12);ctx.quadraticCurveTo(hx-2,hy-22,hx+6,hy-13);ctx.closePath();ctx.fill();ctx.strokeStyle="rgba(0,0,0,.4)";ctx.stroke(); // blowhole fin
+    ctx.fillStyle=shade(acc,-4);ctx.beginPath();ctx.ellipse(hx+10,hy+7,10,5,0,0,7);ctx.fill(); // pale jaw
+    ctx.strokeStyle="rgba(0,0,0,.45)";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(hx+22,hy+5);ctx.quadraticCurveTo(hx+6,hy+12,hx-8,hy+7);ctx.stroke(); // mouth
+    ctx.fillStyle=shade(col,-24);ctx.beginPath();ctx.arc(hx-6,hy-4,2.4,0,7);ctx.arc(hx-2,hy+2,2,0,7);ctx.fill(); // barnacles
+    glowEye(hx+12,hy-2,eye);
   }else if(f.key==="fud"){
-    // wraith: hovering skull-ish head with glow
-    ctx.globalAlpha=0.92;
-    ctx.fillStyle=col;ctx.strokeStyle=acc;ctx.lineWidth=2;
-    ctx.beginPath();ctx.ellipse(hx+4,hy,13,14,0,0,7);ctx.fill();ctx.stroke();
-    glowEye(hx+1,hy,acc);glowEye(hx+9,hy,acc);
+    ctx.globalAlpha=0.94;
+    // tattered spectral hood
+    ctx.fillStyle=shade(col,-6);ctx.strokeStyle=acc;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(hx-12,hy+12);ctx.quadraticCurveTo(hx-14,hy-18,hx+4,hy-20);ctx.quadraticCurveTo(hx+20,hy-18,hx+18,hy+12);
+    ctx.lineTo(hx+12,hy+6);ctx.lineTo(hx+8,hy+14);ctx.lineTo(hx+2,hy+6);ctx.lineTo(hx-4,hy+14);ctx.lineTo(hx-8,hy+6);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle="#140a22";ctx.beginPath();ctx.ellipse(hx+3,hy,8,10,0,0,7);ctx.fill(); // inner dark
+    glowEye(hx,hy-1,acc);glowEye(hx+7,hy-1,acc);
+    ctx.fillStyle=acc;ctx.globalAlpha=0.6;ctx.beginPath();ctx.ellipse(hx+4,hy+6,2,3,0,0,7);ctx.fill(); // wailing mouth
     ctx.globalAlpha=1;
   }else if(f.key==="gas"){
-    // rocky golem head with cracks + ember eyes
-    ctx.fillStyle=col;ctx.strokeStyle="rgba(0,0,0,.6)";ctx.lineWidth=2.5;
-    ctx.beginPath();roundRectPath(hx-10,hy-12,28,26,5);ctx.fill();ctx.stroke();
-    ctx.strokeStyle=shade(col,-30);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(hx-4,hy-10);ctx.lineTo(hx+2,hy-2);ctx.lineTo(hx-2,hy+6);ctx.stroke();
-    glowEye(hx+2,hy-1,eye);glowEye(hx+12,hy-1,eye);
+    var cg=ctx.createLinearGradient(hx-11,hy-13,hx+17,hy+14);cg.addColorStop(0,shade(col,10));cg.addColorStop(1,shade(col,-20));
+    ctx.fillStyle=cg;ctx.strokeStyle="rgba(0,0,0,.65)";ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(hx-11,hy-8);ctx.lineTo(hx-6,hy-13);ctx.lineTo(hx+10,hy-13);ctx.lineTo(hx+17,hy-6);ctx.lineTo(hx+16,hy+8);ctx.lineTo(hx+8,hy+14);ctx.lineTo(hx-7,hy+13);ctx.lineTo(hx-11,hy+4);ctx.closePath();ctx.fill();ctx.stroke(); // craggy head
+    ctx.strokeStyle="#ffb020";ctx.lineWidth=1.8;ctx.globalAlpha=0.9;ctx.beginPath();ctx.moveTo(hx-4,hy-12);ctx.lineTo(hx+1,hy-3);ctx.lineTo(hx-3,hy+6);ctx.moveTo(hx+1,hy-3);ctx.lineTo(hx+9,hy);ctx.stroke();ctx.globalAlpha=1; // cracks
+    ctx.fillStyle=shade(col,-26);ctx.beginPath();ctx.moveTo(hx-8,hy-3);ctx.lineTo(hx+14,hy-3);ctx.lineTo(hx+12,hy+1);ctx.lineTo(hx-6,hy+1);ctx.closePath();ctx.fill(); // brow ridge
+    glowEye(hx-1,hy,eye);glowEye(hx+10,hy,eye);
+    ctx.fillStyle=shade(col,16);for(var gi=0;gi<3;gi++){ctx.beginPath();ctx.moveTo(hx-2+gi*6,hy+10);ctx.lineTo(hx+2+gi*6,hy+10);ctx.lineTo(hx+gi*6,hy+14);ctx.closePath();ctx.fill();} // teeth
   }
   ctx.restore();
 }
@@ -608,6 +644,78 @@ function drawBullCape(shY,hipY,animT){ // flowing navy cape with gold trim, trai
   ctx.restore();
 }
 function glowEye(x,y,eye){ctx.save();var g=ctx.createRadialGradient(x,y,0,x,y,6);g.addColorStop(0,"#fff");g.addColorStop(0.4,eye);g.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,6,0,7);ctx.fill();ctx.restore();}
+
+// ---- per-opponent back layer (drawn behind the body, local -x = behind) ----
+function drawOppBack(f,shY,hipY,animT,col,acc,dark){
+  var sway=Math.sin(animT*3)*5;
+  ctx.save();ctx.strokeStyle="rgba(0,0,0,.5)";ctx.lineWidth=2;
+  if(f.key==="rug"){ // torn dark cape with jagged hem
+    ctx.fillStyle="#0a0608";ctx.strokeStyle="#3a0710";
+    ctx.beginPath();ctx.moveTo(6,shY-6);ctx.quadraticCurveTo(-30,shY+30,-26+sway,hipY+40);
+    ctx.lineTo(-18,hipY+30);ctx.lineTo(-14,hipY+44);ctx.lineTo(-8,hipY+32);ctx.lineTo(-2,hipY+42);ctx.lineTo(4,hipY+30);
+    ctx.lineTo(10,shY-2);ctx.closePath();ctx.fill();ctx.stroke();
+  }else if(f.key==="whale"){ // dorsal fin + tail fluke
+    ctx.fillStyle=shade(col,-18);
+    ctx.beginPath();ctx.moveTo(-6,shY+8);ctx.quadraticCurveTo(-30,shY-4,-14,hipY-6);ctx.closePath();ctx.fill();ctx.stroke(); // dorsal fin
+    ctx.fillStyle=acc;
+    ctx.beginPath();ctx.moveTo(-10,hipY+22);ctx.quadraticCurveTo(-36,hipY+8,-30,hipY+30);ctx.quadraticCurveTo(-22,hipY+24,-14,hipY+34);ctx.closePath();ctx.fill();ctx.stroke(); // fluke
+  }else if(f.key==="gas"){ // rocky boulders on the back shoulders
+    ctx.fillStyle=shade(col,-20);ctx.strokeStyle="rgba(0,0,0,.6)";
+    ctx.beginPath();ctx.arc(-15,shY+2,13,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle=shade(col,-30);ctx.beginPath();ctx.arc(13,shY+3,10,0,7);ctx.fill();ctx.stroke();
+  }else if(f.key==="fud"){ // spectral aura + wisp tail instead of legs
+    ctx.globalAlpha=0.5;var ag=ctx.createRadialGradient(0,hipY-8,6,0,hipY-8,52);ag.addColorStop(0,acc);ag.addColorStop(1,"rgba(75,31,122,0)");
+    ctx.fillStyle=ag;ctx.beginPath();ctx.arc(0,hipY-6,50,0,7);ctx.fill();
+    ctx.globalAlpha=0.9;ctx.fillStyle=col;ctx.strokeStyle=shade(acc,-10);ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(-16,hipY-22);
+    ctx.quadraticCurveTo(-22,hipY+18,-9+sway,hipY+54);
+    ctx.quadraticCurveTo(-3,hipY+42,0,hipY+56);ctx.quadraticCurveTo(3,hipY+42,9-sway,hipY+54);
+    ctx.quadraticCurveTo(22,hipY+18,16,hipY-22);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.globalAlpha=1;
+  }else if(f.key==="bear"){ // shaggy fur tufts behind the shoulders
+    ctx.fillStyle=shade(col,-16);
+    for(var i=-1;i<=1;i+=2){ctx.beginPath();ctx.moveTo(i*13,shY-2);ctx.lineTo(i*26,shY+6);ctx.lineTo(i*15,shY+14);ctx.closePath();ctx.fill();}
+  }
+  ctx.restore();
+}
+// ---- per-character front foot ----
+function drawFoot(f,leg,col,acc,dark){
+  ctx.save();ctx.strokeStyle="rgba(0,0,0,.5)";ctx.lineWidth=1.5;
+  if(f.key==="bull"){
+    ctx.fillStyle=shade(acc,-8);ctx.beginPath();ctx.arc(leg.jx,leg.jy,5.5,0,7);ctx.fill();ctx.stroke(); // knee guard
+    ctx.fillStyle=acc;ctx.beginPath();ctx.ellipse(leg.ex,leg.ey,9,6,0,0,7);ctx.fill();ctx.stroke(); // boot
+  }else if(f.key==="bear"||f.key==="gas"){
+    ctx.fillStyle=shade(col,-18);ctx.beginPath();ctx.ellipse(leg.ex+3,leg.ey,11,6,0,0,7);ctx.fill();ctx.stroke(); // paw/rock foot
+    ctx.strokeStyle=f.key==="gas"?"#ffb020":"#eee";ctx.lineWidth=1.5;
+    for(var i=0;i<3;i++){ctx.beginPath();ctx.moveTo(leg.ex+7+i*3,leg.ey+1);ctx.lineTo(leg.ex+11+i*3,leg.ey+5);ctx.stroke();} // claws
+  }else{ // rug, whale
+    ctx.fillStyle=shade(col,-22);ctx.beginPath();ctx.ellipse(leg.ex+3,leg.ey,9,6,0,0,7);ctx.fill();ctx.stroke();
+  }
+  ctx.restore();
+}
+// ---- per-character front hand/weapon ----
+function drawFist(f,arm,col,acc,dark,eye){
+  ctx.save();ctx.strokeStyle="rgba(0,0,0,.5)";ctx.lineWidth=1.5;
+  if(f.key==="bull"){
+    ctx.fillStyle=acc;ctx.beginPath();ctx.arc(arm.ex,arm.ey,7,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle=shade(acc,-8);ctx.beginPath();ctx.arc(arm.jx,arm.jy,5,0,7);ctx.fill();ctx.stroke(); // forearm gauntlet
+  }else if(f.key==="rug"){
+    ctx.fillStyle=shade(col,12);ctx.beginPath();ctx.arc(arm.ex,arm.ey,6,0,7);ctx.fill();ctx.stroke();
+    var a=Math.atan2(arm.ey-arm.jy,arm.ex-arm.jx);ctx.save();ctx.translate(arm.ex,arm.ey);ctx.rotate(a);
+    ctx.fillStyle="#cfd6dd";ctx.beginPath();ctx.moveTo(2,-2.5);ctx.lineTo(19,-3);ctx.lineTo(24,0);ctx.lineTo(19,3);ctx.lineTo(2,2.5);ctx.closePath();ctx.fill();ctx.stroke(); // blade
+    ctx.fillStyle="#7a1020";ctx.fillRect(-3,-3,5,6);ctx.restore(); // hilt
+  }else if(f.key==="fud"){
+    ctx.globalAlpha=0.9;ctx.fillStyle=col;ctx.beginPath();ctx.arc(arm.ex,arm.ey,5,0,7);ctx.fill();ctx.globalAlpha=1;
+    ctx.strokeStyle=acc;ctx.lineWidth=1.6;for(var i=0;i<3;i++){ctx.beginPath();ctx.moveTo(arm.ex,arm.ey);ctx.lineTo(arm.ex+6+i*2,arm.ey+5+(i-1)*4);ctx.stroke();} // claws
+  }else if(f.key==="gas"){
+    ctx.fillStyle=shade(col,-12);ctx.beginPath();roundRectPath(arm.ex-8,arm.ey-7,16,14,4);ctx.fill();ctx.stroke(); // rock fist
+    ctx.fillStyle="#ffb020";ctx.globalAlpha=0.5;ctx.beginPath();ctx.arc(arm.ex,arm.ey,3,0,7);ctx.fill();ctx.globalAlpha=1;
+  }else{ // bear, whale: big fist (+bear claws)
+    ctx.fillStyle=shade(col,8);ctx.beginPath();ctx.arc(arm.ex,arm.ey,8,0,7);ctx.fill();ctx.stroke();
+    if(f.key==="bear"){ctx.strokeStyle="#eee";ctx.lineWidth=1.5;for(var j=0;j<3;j++){ctx.beginPath();ctx.moveTo(arm.ex+3,arm.ey-5+j*4);ctx.lineTo(arm.ex+11,arm.ey-6+j*4);ctx.stroke();}}
+  }
+  ctx.restore();
+}
 
 function drawDowned(f,col,acc,dark,edge,eye){
   // lying on ground
