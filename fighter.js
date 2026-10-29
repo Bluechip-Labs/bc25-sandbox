@@ -457,16 +457,23 @@ function drawFighter(f){
   var hipY=f.y-46+(p.crouch||0);
   if(p.down){ drawDowned(f,col,acc,dark,edge,eye); ctx.restore(); return; }
   var shColY=hipY-56; // shoulder y
+  if(f.key==="bull") drawBullCape(shColY,hipY,f.animT); // cape trails behind the body
   // BACK leg + BACK arm first (behind torso)
   limb(0,hipY, Math.PI/2+p.legB, 26, p.kneeB, 26, 11,8, shade(col,-18),shade(dark,-18),shade(edge,-18));
   limb(2,shColY, Math.PI/2+p.armB, 22, p.elbowB, 20, 9,6, shade(col,-14),shade(dark,-14),shade(edge,-14));
   // TORSO
   drawTorso(f,hipY,shColY,col,acc,dark,edge,p);
   // FRONT leg + FRONT arm
-  limb(0,hipY, Math.PI/2+p.legF, 27, p.kneeF, 27, 12,9, col,dark,edge);
+  var fleg=limb(0,hipY, Math.PI/2+p.legF, 27, p.kneeF, 27, 12,9, col,dark,edge);
+  if(f.key==="bull"){ // gold greave + boot
+    ctx.strokeStyle="rgba(0,0,0,.5)";ctx.lineWidth=1.5;
+    ctx.fillStyle=shade(acc,-8);ctx.beginPath();ctx.arc(fleg.jx,fleg.jy,5.5,0,7);ctx.fill();ctx.stroke(); // knee guard
+    ctx.fillStyle=acc;ctx.beginPath();ctx.ellipse(fleg.ex,fleg.ey,9,6,0,0,7);ctx.fill();ctx.stroke(); // boot
+  }
   var arm=limb(3,shColY, Math.PI/2+p.armF, 23, p.elbowF, 21, 10,7, col,dark,edge);
   // fist/foot accents
   ctx.fillStyle=acc;ctx.beginPath();ctx.arc(arm.ex,arm.ey,7,0,7);ctx.fill();ctx.strokeStyle="rgba(0,0,0,.5)";ctx.stroke();
+  if(f.key==="bull"){ ctx.fillStyle=shade(acc,-8);ctx.beginPath();ctx.arc(arm.jx,arm.jy,5,0,7);ctx.fill();ctx.stroke(); } // forearm gauntlet
   // HEAD + per-character
   drawHead(f,shColY,col,acc,dark,edge,eye,p);
   ctx.restore();
@@ -475,7 +482,7 @@ function drawFighter(f){
 }
 
 function drawTorso(f,hipY,shY,col,acc,dark,edge,p){
-  var b=f.c.build, wTop=b==="titan"?34:b==="brute"?30:b==="lean"?20:b==="wraith"?20:26;
+  var b=f.c.build, wTop=b==="titan"?34:b==="brute"?30:b==="hero"?29:b==="lean"?20:b==="wraith"?20:26;
   var wBot=wTop*0.7;
   ctx.save();
   var g=ctx.createLinearGradient(-wTop,0,wTop,0);g.addColorStop(0,shade(col,-20));g.addColorStop(0.5,col);g.addColorStop(1,edge);
@@ -487,12 +494,16 @@ function drawTorso(f,hipY,shY,col,acc,dark,edge,p){
   ctx.strokeStyle="rgba(0,0,0,.25)";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,shY+4);ctx.lineTo(0,hipY-4);ctx.stroke();
   // chest emblem / armor plate (gold) for hero; plating hints for others
   if(f.key==="bull"){
+    // gold chest plate + BC25 emblem
     ctx.fillStyle=acc;roundRectPath(-18,shY+8,36,30,8);ctx.fill();ctx.strokeStyle="rgba(0,0,0,.5)";ctx.stroke();
-    ctx.fillStyle=shade(acc,-28);ctx.font="bold 11px system-ui";ctx.textAlign="center";
-    ctx.save();ctx.scale(f.facing,1);ctx.fillText("BC25",0,shY+27);ctx.restore();
-    // shoulder pauldrons
+    ctx.fillStyle="rgba(255,255,255,.25)";roundRectPath(-15,shY+10,30,5,3);ctx.fill(); // plate gloss
+    ctx.fillStyle=shade(acc,-32);ctx.font="bold 11px system-ui";ctx.textAlign="center";
+    ctx.save();ctx.scale(f.facing,1);ctx.fillText("BC25",0,shY+28);ctx.restore();
+    // gold belt + buckle
+    ctx.fillStyle=acc;roundRectPath(-wBot-2,hipY-9,wBot*2+4,9,3);ctx.fill();ctx.strokeStyle="rgba(0,0,0,.5)";ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=shade(acc,-34);ctx.beginPath();ctx.arc(0,hipY-4.5,4,0,7);ctx.fill();
+    // shoulder pauldrons (layered)
     pauldron(-wTop,shY+6,acc);pauldron(wTop,shY+6,acc);
-    // cape hint
   }else if(b==="titan"||b==="brute"){
     ctx.fillStyle=shade(acc,-10);roundRectPath(-wTop*0.7,shY+6,wTop*1.4,14,6);ctx.globalAlpha=0.8;ctx.fill();ctx.globalAlpha=1;
   }else if(f.key==="rug"){
@@ -506,17 +517,27 @@ function drawHead(f,shY,col,acc,dark,edge,eye,p){
   var hx=0,hy=shY-16;
   ctx.save();
   if(f.key==="bull"){
-    // bull head: muzzle + gold horns + glowing eyes
-    ctx.fillStyle=col;ctx.strokeStyle="rgba(0,0,0,.55)";ctx.lineWidth=2.5;
-    ctx.beginPath();ctx.ellipse(hx+4,hy,15,13,0,0,7);ctx.fill();ctx.stroke(); // skull
-    ctx.beginPath();ctx.ellipse(hx+14,hy+4,9,8,0,0,7);ctx.fillStyle=shade(col,-12);ctx.fill();ctx.stroke(); // muzzle
-    // horns (gold, curving up)
-    horn(hx+2,hy-9,1,acc);horn(hx+6,hy-9,-1,acc);
-    // nostrils + eye glow
-    ctx.fillStyle="#061030";ctx.beginPath();ctx.arc(hx+18,hy+5,1.6,0,7);ctx.fill();
-    glowEye(hx+8,hy-2,eye);
-    // ears
-    ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(hx-8,hy-2,5,3,0.4,0,7);ctx.fill();ctx.stroke();
+    // ears (behind skull)
+    ctx.fillStyle=shade(col,-10);ctx.strokeStyle="rgba(0,0,0,.6)";ctx.lineWidth=2;
+    ctx.beginPath();ctx.ellipse(hx-10,hy-2,6,4,0.5,0,7);ctx.fill();ctx.stroke();
+    // skull
+    ctx.fillStyle=col;ctx.strokeStyle="rgba(0,0,0,.6)";ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.ellipse(hx+4,hy,16,14,0,0,7);ctx.fill();ctx.stroke();
+    // muzzle
+    ctx.fillStyle=shade(col,-16);ctx.beginPath();ctx.ellipse(hx+16,hy+5,10,8,0,0,7);ctx.fill();ctx.stroke();
+    // big curved gold horns, emerging from the top sides of the skull
+    bullHorn(hx-1,hy-8,-1,acc); bullHorn(hx+9,hy-8,1,acc);
+    // gold brow/face mask (reference's facial armor) — sits above the eyes
+    ctx.fillStyle=acc;ctx.strokeStyle="rgba(0,0,0,.5)";ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(hx-11,hy-5);ctx.lineTo(hx-3,hy-11);ctx.lineTo(hx+5,hy-9);ctx.lineTo(hx+13,hy-11);ctx.lineTo(hx+17,hy-5);
+    ctx.lineTo(hx+13,hy-3);ctx.lineTo(hx-7,hy-3);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle="rgba(255,255,255,.3)";ctx.beginPath();ctx.moveTo(hx-9,hy-5);ctx.lineTo(hx-2,hy-9);ctx.lineTo(hx+2,hy-8);ctx.closePath();ctx.fill(); // mask gloss
+    // gold nose guard down the muzzle
+    ctx.fillStyle=acc;ctx.beginPath();roundRectPath(hx+9,hy-2,5,10,2);ctx.fill();ctx.stroke();
+    // glowing eyes under the brow
+    glowEye(hx-2,hy,eye); glowEye(hx+8,hy,eye);
+    // nostrils
+    ctx.fillStyle="#061030";ctx.beginPath();ctx.arc(hx+20,hy+6,1.7,0,7);ctx.fill();ctx.arc(hx+13,hy+7,1.7,0,7);ctx.fill();
   }else if(f.key==="bear"){
     ctx.fillStyle=col;ctx.strokeStyle="rgba(0,0,0,.55)";ctx.lineWidth=2.5;
     ctx.beginPath();ctx.arc(hx+4,hy,15,0,7);ctx.fill();ctx.stroke();
@@ -554,6 +575,38 @@ function drawHead(f,shY,col,acc,dark,edge,eye,p){
 }
 function horn(x,y,dir,acc){ctx.save();ctx.fillStyle=acc;ctx.strokeStyle="rgba(0,0,0,.5)";ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+dir*16,y-14,x+dir*10,y-26);ctx.quadraticCurveTo(x+dir*4,y-14,x,y);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();}
+function bullHorn(x,y,dir,acc){ // thick gold horn: wide base, sweeps outward then curls up to a tip
+  ctx.save();ctx.strokeStyle="rgba(0,0,0,.6)";ctx.lineWidth=2;
+  var g=ctx.createLinearGradient(x,y,x+dir*24,y-26);g.addColorStop(0,shade(acc,-26));g.addColorStop(1,acc);
+  ctx.fillStyle=g;
+  ctx.beginPath();
+  ctx.moveTo(x,y+5);                                   // base, bottom (thick)
+  ctx.quadraticCurveTo(x+dir*24,y+4, x+dir*31,y-24);   // outer: out to the side, then up to tip
+  ctx.quadraticCurveTo(x+dir*22,y-11, x+dir*13,y-5);   // tip underside back in
+  ctx.quadraticCurveTo(x+dir*7,y-1, x,y-5);            // inner edge back to base top
+  ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle="rgba(255,255,255,.6)";ctx.beginPath();ctx.arc(x+dir*31,y-24,2.6,0,7);ctx.fill(); // tip glint
+  ctx.restore();
+}
+function drawBullCape(shY,hipY,animT){ // flowing navy cape with gold trim, trailing behind (-x local)
+  var sway=Math.sin(animT*3)*7;
+  ctx.save();
+  var g=ctx.createLinearGradient(-50,shY,0,hipY+46);g.addColorStop(0,"#16285f");g.addColorStop(1,"#0a1434");
+  ctx.fillStyle=g;ctx.strokeStyle="#c8912a";ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(8,shY-8);
+  ctx.quadraticCurveTo(-46,shY+26, -42+sway, hipY+48);
+  ctx.quadraticCurveTo(-20,hipY+34, -2,hipY+36);
+  ctx.lineTo(12,shY-4);
+  ctx.closePath();ctx.fill();ctx.stroke();
+  // inner fold shading
+  ctx.strokeStyle="rgba(240,180,41,.35)";ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(-6,shY+6);ctx.quadraticCurveTo(-30,hipY+6,-24+sway,hipY+42);ctx.stroke();
+  // gold collar clasp at shoulders
+  ctx.fillStyle="#f0b429";ctx.strokeStyle="rgba(0,0,0,.5)";ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(2,shY-6,4,0,7);ctx.fill();ctx.stroke();
+  ctx.restore();
+}
 function glowEye(x,y,eye){ctx.save();var g=ctx.createRadialGradient(x,y,0,x,y,6);g.addColorStop(0,"#fff");g.addColorStop(0.4,eye);g.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,6,0,7);ctx.fill();ctx.restore();}
 
 function drawDowned(f,col,acc,dark,edge,eye){
