@@ -3,5 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "description": "BC25 Defender Index — public sandbox/simulator (static site + Vercel serverless)",
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
 }
