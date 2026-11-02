@@ -386,24 +386,33 @@
 (function(){
   "use strict";
   var LS="bc25_sandbox_v1";
-  var START_USDC=10000, NAV0=1.0379;
+  var START_USDC=10000;
   var fmt=function(n,d){d=d==null?2:d;return Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});};
   var usd=function(n){return "$"+fmt(n,2);};
 
   // ---- state ----
   var state;
-  function fresh(){return {usdc:START_USDC, shares:0, nav:NAV0, navPrev:NAV0, badges:{}, joined:false};}
+  function fresh(){return {usdc:START_USDC, shares:0, nav:null, navPrev:null, badges:{}, joined:false};}
   function load(){try{var s=JSON.parse(localStorage.getItem(LS));if(s&&typeof s.usdc==="number")return s;}catch(e){}return fresh();}
   function save(){try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}}
   state=load();
+  // Never price anything off a persisted/placeholder NAV: the real latest NAV
+  // is set by loadStageB() once /stageb.json resolves. Clearing it here stops a
+  // stale headline flashing on first paint and blocks mint/redeem pricing
+  // against a fabricated price (the "lost money overnight" glitch).
+  state.nav=null; state.navPrev=null;
+  function navReady(){return typeof state.nav==="number" && isFinite(state.nav);}
+  function setActions(on){["mintBtn","redBtn","swapBtn"].forEach(function(id){var b=document.getElementById(id);if(b)b.disabled=!on;});}
 
   // ---- live market data (CoinGecko via /api/*, graceful fallback to demo data) ----
   // Real BC25 Stage B paper-test data (series rebased to 100 at inception + latest basket weights).
   var STAGEB=null;
   function sliceSeries(arr,mo){var n=Math.max(2,Math.round(arr.length*(mo/12)));if(n>arr.length)n=arr.length;if(n<2)n=2;var s=arr.slice(arr.length-n);var b=s[0];return s.map(function(v){return v/b;});}
   function loadStageB(){
-    fetch("/stageb.json").then(function(r){return r.json();}).then(function(d){
-      if(!d||!d.series||!d.series.index||!d.series.index.length)return;
+    // Cache-bust + no-store so a returning visitor always gets the latest daily
+    // NAV, never a CDN/browser-cached copy from a previous day.
+    fetch("/stageb.json?ts="+Date.now(),{cache:"no-store"}).then(function(r){return r.json();}).then(function(d){
+      if(!d||!d.series||!d.series.index||!d.series.index.length)throw new Error("bad stageb data");
       STAGEB=d;var idx=d.series.index,n=idx.length;
       // headline NAV reflects the real latest Stage B level ($1.00 = 100 at inception)
       state.nav=idx[n-1]/100;state.navPrev=(n>1?idx[n-2]:idx[n-1])/100;
@@ -411,7 +420,16 @@
       renderBasket();drawRegime();render();updateQuotes();refreshTakeaway();
       if(!document.querySelector('section[data-view="time"]').hidden)drawTime();
       if(!document.querySelector('section[data-view="bear"]').hidden)drawBear(1);
-    }).catch(function(){});
+    }).catch(function(){
+      // Don't strand the UI on a fabricated price: retry once, then show an
+      // honest message and keep mint/redeem disabled until real NAV loads.
+      if(loadStageB._retried){
+        var e=document.getElementById("sNavChg");
+        if(e)e.innerHTML='<span class="down">couldn’t load latest NAV — reload the page</span>';
+      }else{
+        loadStageB._retried=true;setTimeout(loadStageB,1500);
+      }
+    });
   }
 
   // ---- mascot ----
@@ -508,6 +526,17 @@
     document.getElementById("sUsdc").textContent=fmt(state.usdc)+" ";
     var wu=document.getElementById("wUsdc");if(wu)wu.textContent=fmt(state.usdc)+" USDC";
     document.getElementById("sShares").textContent=fmt(state.shares,4);
+    if(!navReady()){
+      document.getElementById("sNav").textContent="—";
+      document.getElementById("sBcVal").textContent="—";
+      document.getElementById("pv").textContent="—";
+      document.getElementById("sNavChg").innerHTML='<span class="muted">loading Stage B data…</span>';
+      document.getElementById("pvpl").innerHTML="";
+      setActions(false);
+      save();
+      return;
+    }
+    setActions(true);
     document.getElementById("sNav").textContent=usd(state.nav);
     document.getElementById("sBcVal").textContent=usd(state.shares*state.nav);
     document.getElementById("pv").textContent=usd(pv());
@@ -523,6 +552,11 @@
 
   // ---- quotes ----
   function updateQuotes(){
+    if(!navReady()){
+      ["mintQuote","redQuote","swapQuote"].forEach(function(id){var e=document.getElementById(id);if(e)e.innerHTML='<div class="ln"><span class="muted">Loading latest NAV…</span></div>';});
+      var so0=document.getElementById("swapOut");if(so0)so0.value="";
+      return;
+    }
     var m=parseFloat(document.getElementById("mintAmt").value)||0;
     var mf=m*0.01, mnet=m-mf, msh=state.nav?mnet/state.nav:0;
     document.getElementById("mintQuote").innerHTML=
@@ -544,6 +578,7 @@
 
   // ---- actions ----
   document.getElementById("mintBtn").addEventListener("click",function(){
+    if(!navReady())return toast("Loading latest NAV — one moment…");
     var m=parseFloat(document.getElementById("mintAmt").value)||0;
     if(m<=0)return toast("Enter an amount");
     if(m>state.usdc)return toast("Not enough test USDC");
@@ -552,6 +587,7 @@
     say("Nice. You now hold a slice of the whole basket — not just one coin. 🐂","🐂");
   });
   document.getElementById("redBtn").addEventListener("click",function(){
+    if(!navReady())return toast("Loading latest NAV — one moment…");
     var r=parseFloat(document.getElementById("redAmt").value)||0;
     if(r<=0)return toast("Enter an amount");
     if(r>state.shares)return toast("You don't hold that many BC25");
@@ -561,6 +597,7 @@
   });
   document.getElementById("swapBtn").addEventListener("click",function(){
     if(!wConnected)return openWallet();
+    if(!navReady())return toast("Loading latest NAV — one moment…");
     var s=parseFloat(document.getElementById("swapAmt").value)||0;
     if(s<=0)return toast("Enter an amount");
     if(s>state.usdc)return toast("Not enough test USDC");
@@ -725,7 +762,10 @@
     if(!document.querySelector('section[data-view="time"]').hidden)drawTime();
   });
   document.getElementById("resetBtn").addEventListener("click",function(){
-    state=fresh();save();render();renderBadges();toast("Sandbox reset");say("Fresh start. "+quips[Math.floor(Math.random()*quips.length)],"🐂");
+    state=fresh();
+    // Keep the live NAV after a reset (fresh() clears it); only holdings reset.
+    if(STAGEB){var idx=STAGEB.series.index,n=idx.length;state.nav=idx[n-1]/100;state.navPrev=(n>1?idx[n-2]:idx[n-1])/100;}
+    save();render();renderBadges();toast("Sandbox reset");say("Fresh start. "+quips[Math.floor(Math.random()*quips.length)],"🐂");
   });
 
   // ---- init ----
