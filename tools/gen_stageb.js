@@ -70,6 +70,44 @@ for (const r of nav.rows){
 }
 if (series.date.length < 2) die("series too short (" + series.date.length + " rows)");
 
+// --- fixed-anchor NAV ledger (stops the rolling-window rebase drift) ---
+// The engine rebases its INDEX to 100 at the START of a trailing window that
+// rolls forward every night, so the same calendar date's absolute NAV shifted
+// run-to-run even when the basket didn't move (a minter would see fake
+// overnight gains/losses). We keep a persistent per-date NAV ledger updated
+// ONLY by the real daily return (which is base-invariant), so a given date's
+// NAV never changes once written and mint/redeem is reproducible.
+//   - First seed (or BC25_NAV_REANCHOR=1): anchor the LATEST date to $1.00 and
+//     scale the whole visible window uniformly (uniform scale preserves every
+//     real daily return), then freeze it.
+//   - Later runs: only NEW dates are appended, chaining the real daily return
+//     onto the prior day's frozen NAV. Existing dates stay frozen.
+const LEDGER_FP = process.env.BC25_NAV_LEDGER || path.join(__dirname, "..", "nav_ledger.json");
+const REANCHOR = process.env.BC25_NAV_REANCHOR === "1";
+let ledger = {};
+try { ledger = JSON.parse(fs.readFileSync(LEDGER_FP, "utf8")); } catch (e) { ledger = {}; }
+const dts = series.date, idx = series.index;
+const haveLedger = ledger && Object.keys(ledger).length > 0;
+if (!haveLedger || REANCHOR) {
+  const k = 1.0 / (idx[idx.length - 1] / 100);   // anchor latest date to $1.00
+  ledger = {};
+  for (let i = 0; i < dts.length; i++) ledger[dts[i]] = round((idx[i] / 100) * k, 6);
+} else {
+  for (let i = 0; i < dts.length; i++) {
+    const d = dts[i];
+    if (ledger[d] != null) continue;             // already frozen — never change it
+    let prevNav = null, prevIdx = null;          // chain the real daily return forward
+    for (let j = i - 1; j >= 0; j--) { if (ledger[dts[j]] != null) { prevNav = ledger[dts[j]]; prevIdx = idx[j]; break; } }
+    ledger[d] = (prevNav != null && isFinite(prevIdx) && prevIdx !== 0)
+      ? round(prevNav * (idx[i] / prevIdx), 6)
+      : round(idx[i] / 100, 6);                   // fallback (no overlap to chain from)
+  }
+}
+fs.writeFileSync(LEDGER_FP, JSON.stringify(ledger));
+// Replace the window-relative index with the fixed-anchor NAV (x100 so the
+// frontend's idx/100 and the chart's self-rebasing both keep working unchanged).
+series.index = dts.map(d => round(ledger[d] * 100, 4));
+
 // --- weights from the LAST row of daily_weights.csv ---
 const w = readCsv(wFp);
 const wLast = w.rows[w.rows.length - 1];
@@ -113,7 +151,7 @@ const out = {
   asof: series.date[series.date.length - 1],
   start: series.date[0],
   days: series.date.length,
-  note: "BC25 Stage B paper-test, trailing " + series.date.length + "d, rebased to 100 at start. Index = BC25 NAV.",
+  note: "BC25 Stage B paper-test, trailing " + series.date.length + "d. Index = BC25 NAV x100, fixed-anchor ($1.00 at re-anchor date, chained by real daily returns) — stable across runs.",
   series, weights, regime
 };
 fs.writeFileSync(OUT, JSON.stringify(out));

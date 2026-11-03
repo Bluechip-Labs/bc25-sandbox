@@ -2,7 +2,7 @@
   daily_update.ps1 - BC25 Sandbox daily data refresh.
 
   Chains:  run the xv31 Stage B engine  ->  regenerate stageb.json from the
-  newest run  ->  commit + push stageb.json (only if it changed).
+  newest run  ->  commit + push stageb.json + nav_ledger.json (only if changed).
 
   Ships ONLY derived numbers (NAV / weights / regime). The engine code and its
   CoinGecko key live in the engine folder and are never read or copied here.
@@ -38,14 +38,16 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "gen_stageb failed (exit $LASTEXITCODE)" }
 
   # 3) commit + push only when stageb.json actually changed
+  #    (also version nav_ledger.json — the fixed-anchor NAV ledger that keeps
+  #    the per-share price stable across runs; it changes whenever stageb does)
   Log "step 3/3: publishing"
   Set-Location $Sandbox
   if (git status --porcelain -- stageb.json) {
     $asof = (& node -e "process.stdout.write(require('./stageb.json').asof)")
-    git add stageb.json
+    git add stageb.json nav_ledger.json
     git commit -m "data: refresh Stage B snapshot (asof $asof)" | Out-Null
     git push | Out-Null
-    Log "pushed stageb.json (asof $asof)"
+    Log "pushed stageb.json + nav_ledger.json (asof $asof)"
   } else {
     Log "stageb.json unchanged - nothing to publish"
   }
