@@ -336,6 +336,7 @@
         <span><i style="background:#627eea"></i>ETH</span>
         <span><i style="background:#14f195"></i>SOL</span>
       </div>
+      <div class="sm muted" id="tmRange" style="margin-top:8px"></div>
       <div class="grid2" style="margin-top:12px" id="tmResults"></div>
       <div class="disc" id="tmTakeaway"></div>
     </div>
@@ -345,7 +346,7 @@
   <section data-view="bear" hidden>
     <div class="card">
       <h2>🐻 Survive the Bear</h2>
-      <p class="muted sm">This is the <b>real bear market BC25 weathered in Stage B testing</b> — BTC fell almost 50%. Pick what you'd have held and replay it to see how BC25's defensive engine held up. <span id="bearWinLbl"></span></p>
+      <p class="muted sm">This is the <b>real bear market BC25 weathered in Stage B testing</b> — <span id="bearDrop">BTC fell sharply</span>. Pick what you'd have held and replay it to see how BC25's defensive engine held up. <span id="bearWinLbl"></span></p>
       <div style="display:flex;align-items:center;gap:12px;margin:12px 0">
         <button class="btn sm" id="defBtn">🛡️ Defensive mode: OFF</button>
         <span class="muted sm" id="defNote">You're holding plain BTC (fully exposed)</span>
@@ -641,6 +642,9 @@
   var ETH_S=[100,115,132,122,150,168,154,180,160,112,100,128,138];
   var BC_S =[100,108,118,114,130,140,136,150,146,128,124,136,142]; // smoother, loses far less in the dip
   function slice(arr,mo){var s=arr.slice(arr.length-1-mo);var b=s[0];return s.map(function(v){return v/b;});}
+  // start/end dates of the Time Machine window (mirrors sliceSeries' window math)
+  function tmDates(mo){if(!STAGEB||!STAGEB.series||!STAGEB.series.date)return null;var d=STAGEB.series.date,L=d.length;
+    var n=Math.max(2,Math.round(L*(mo/12)));if(n>L)n=L;return {from:d[L-n],to:d[L-1]};}
   function drawTime(){
     var amt=parseFloat(document.getElementById("tmAmt").value),mo=parseInt(document.getElementById("tmMo").value);
     document.getElementById("tmAmtL").textContent="$"+fmt(amt,0);
@@ -658,6 +662,10 @@
     function plot(s,col,w){x.strokeStyle=col;x.lineWidth=w;x.beginPath();s.forEach(function(v,i){var px=X(i,s.length),py=Y(v);i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();}
     plot(btc,"#f7931a",2);plot(eth,"#627eea",2);if(sol)plot(sol,"#14f195",2);plot(bc,cs.getPropertyValue('--gold'),3.2);
     x.fillStyle=mut;x.font="11px monospace";x.fillText("x"+fmt(mx,2),4,P+4);x.fillText("x"+fmt(mn,2),4,H-P+4);
+    var tmd=tmDates(mo),rg=document.getElementById("tmRange");
+    if(tmd){x.fillText(tmd.from,P,H-6);x.fillText(tmd.to,W-P-x.measureText(tmd.to).width,H-6);
+      if(rg)rg.innerHTML="Invested <b class='mono'>"+tmd.from+"</b> → valued <b class='mono'>"+tmd.to+"</b> · as of the latest nightly update ("+STAGEB.asof+")";}
+    else if(rg)rg.textContent="";
     var fb=bc[bc.length-1],fbtc=btc[btc.length-1],feth=eth[eth.length-1];
     var html=tileR("BC25",amt*fb,fb)+tileR("If BTC only",amt*fbtc,fbtc)+tileR("If ETH only",amt*feth,feth);
     if(sol){var fsol=sol[sol.length-1];html+=tileR("If SOL only",amt*fsol,fsol);}
@@ -694,7 +702,8 @@
   }
   function bearLabel(){
     var el=document.getElementById("bearWinLbl");if(!el)return;
-    el.innerHTML=bearWin?"<b class='muted'>Real window: "+bearWin.from+" → "+bearWin.to+" ("+bearWin.days+" days).</b>":"";
+    el.innerHTML=bearWin?"<b class='muted'>Real window: "+bearWin.from+" → "+bearWin.to+" ("+bearWin.days+" days) — the worst BTC drop in the trailing "+STAGEB.days+" days. Data as of "+STAGEB.asof+" (refreshed nightly).</b>":"";
+    var dr=document.getElementById("bearDrop");if(dr&&bearWin){var dd=(1-bearWin.btc[bearWin.btc.length-1])*100;dr.textContent="BTC fell about "+Math.round(dd)+"%";}
   }
   document.getElementById("defBtn").addEventListener("click",function(){
     defensive=!defensive;this.textContent="🛡️ Defensive mode: "+(defensive?"ON":"OFF");
