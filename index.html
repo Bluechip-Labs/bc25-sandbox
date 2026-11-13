@@ -77,6 +77,13 @@
   .stat .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .stat .v{font-size:22px;font-weight:800;color:var(--ink);margin-top:3px}
   .stat .v.big{font-size:27px}
+  .pvbox{display:flex;align-items:stretch;gap:14px}
+  .pvbox .pvl{flex:1;min-width:0}
+  .pvbox .pvr{flex:1;min-width:0;border-left:1px solid var(--line);padding-left:14px;display:flex;flex-direction:column;justify-content:center}
+  .pvbox .pvr .k{margin-bottom:4px}
+  .mktrow{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;padding:1px 0}
+  .mktrow span{color:var(--muted);font-family:var(--f-mono);font-size:12.5px}
+  .mktrow b{font-weight:700}
 
   label.fld{display:block;margin:10px 0}
   label.fld .lab{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:5px}
@@ -216,7 +223,15 @@
   <!-- DASHBOARD -->
   <section data-view="dashboard">
     <div class="row" style="margin-bottom:14px">
-      <div class="stat"><div class="k">Portfolio value</div><div class="v big tnum" id="pv">—</div><div class="sm" id="pvpl"></div></div>
+      <div class="stat pvbox">
+        <div class="pvl"><div class="k">Portfolio value</div><div class="v big tnum" id="pv">—</div><div class="sm" id="pvpl"></div></div>
+        <div class="pvr" id="mktDay" hidden>
+          <div class="k" id="mktDayK">Latest day</div>
+          <div class="mktrow"><span>BTC</span><b class="tnum" id="mBTC">—</b></div>
+          <div class="mktrow"><span>ETH</span><b class="tnum" id="mETH">—</b></div>
+          <div class="mktrow"><span>SOL</span><b class="tnum" id="mSOL">—</b></div>
+        </div>
+      </div>
     </div>
     <div class="grid2">
       <div class="stat"><div class="k">Test USDC</div><div class="v tnum" id="sUsdc">—</div></div>
@@ -409,6 +424,20 @@
   // Real BC25 Stage B paper-test data (series rebased to 100 at inception + latest basket weights).
   var STAGEB=null;
   function sliceSeries(arr,mo){var n=Math.max(2,Math.round(arr.length*(mo/12)));if(n>arr.length)n=arr.length;if(n<2)n=2;var s=arr.slice(arr.length-n);var b=s[0];return s.map(function(v){return v/b;});}
+  // latest-day % change for BTC / ETH / SOL from the nightly Stage B benchmark series
+  function renderMktDay(){
+    var box=document.getElementById("mktDay");if(!box||!STAGEB||!STAGEB.series)return;
+    var s=STAGEB.series,n=s.date.length;if(n<2)return;
+    [["btc","mBTC"],["eth","mETH"],["sol","mSOL"]].forEach(function(p){
+      var a=s[p[0]],el=document.getElementById(p[1]);if(!a||!el)return;
+      var v=a[n-1],pv=a[n-2];
+      if(v==null||pv==null||!pv){el.textContent="—";el.className="tnum muted";return;}
+      var c=(v/pv-1)*100;
+      el.textContent=(c>=0?"▲ +":"▼ −")+fmt(Math.abs(c),2)+"%";el.className="tnum "+(c>=0?"up":"down");
+    });
+    document.getElementById("mktDayK").innerHTML='Latest day <span class="mono" style="white-space:nowrap">'+s.date[n-1]+'</span>';
+    box.hidden=false;
+  }
   function loadStageB(){
     // Cache-bust + no-store so a returning visitor always gets the latest daily
     // NAV, never a CDN/browser-cached copy from a previous day.
@@ -418,7 +447,7 @@
       // headline NAV reflects the real latest Stage B level ($1.00 = 100 at inception)
       state.nav=idx[n-1]/100;state.navPrev=(n>1?idx[n-2]:idx[n-1])/100;
       bearWin=buildBearWin();bearLabel();
-      renderBasket();drawRegime();render();updateQuotes();refreshTakeaway();
+      renderBasket();drawRegime();render();updateQuotes();refreshTakeaway();renderMktDay();
       if(!document.querySelector('section[data-view="time"]').hidden)drawTime();
       if(!document.querySelector('section[data-view="bear"]').hidden)drawBear(1);
     }).catch(function(){
