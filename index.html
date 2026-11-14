@@ -169,29 +169,36 @@
   .runoverlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(5,10,22,.58);border-radius:12px;text-align:center;padding:12px;color:#eaf0ff}
   .runoverlay.hide{display:none}
   #runL,#runJ,#runR{cursor:pointer;min-width:52px}
-  /* ---- DEX-style swap (simulated) ---- */
-  .uni{max-width:440px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:0 8px 30px rgba(0,0,0,.14)}
-  .uni-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-  .uni-tabs{display:flex;gap:4px}
-  .uni-tab{background:transparent;border:none;color:var(--muted);font:inherit;font-weight:800;font-size:16px;padding:6px 12px;border-radius:12px;cursor:pointer}
-  .uni-tab.active{color:var(--fg);background:var(--surface-2)}
-  .uni-connect{background:rgba(252,114,255,.14);color:#c233cf;border:1px solid rgba(252,114,255,.4);border-radius:14px;padding:8px 13px;font:inherit;font-weight:800;cursor:pointer;font-size:13px}
-  .uni-connect.on{background:var(--surface-2);color:var(--fg);border-color:var(--line)}
-  .uni-sim{background:var(--surface-2);border:1px dashed var(--gold);color:var(--muted);font-size:11.5px;border-radius:10px;padding:7px 10px;margin-bottom:10px;text-align:center}
-  .uni-box{background:var(--surface-2);border:1px solid var(--line);border-radius:18px;padding:14px}
-  .uni-box+.uni-box{margin-top:6px}
-  .uni-lbl{font-size:13px;color:var(--muted);margin-bottom:6px}
-  .uni-row{display:flex;align-items:center;gap:8px}
-  .uni-amt{flex:1;min-width:0;background:transparent;border:none;outline:none;font:inherit;font-size:30px;font-weight:700;color:var(--fg);font-variant-numeric:tabular-nums}
-  .uni-amt.addr{font-size:17px}
-  .uni-amt::-webkit-outer-spin-button,.uni-amt::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-  .uni-pill{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-weight:800;white-space:nowrap}
-  .uni-pill.gold{background:var(--gold);color:#201700;border-color:var(--gold)}
-  .uni-ic{width:18px;height:18px;border-radius:50%;object-fit:contain}
-  .uni-sub{font-size:12.5px;color:var(--muted);margin-top:8px}
-  .uni-arrow{width:34px;height:34px;margin:-13px auto;position:relative;z-index:2;display:flex;align-items:center;justify-content:center;background:var(--surface);border:4px solid var(--surface);border-radius:12px;color:var(--muted);font-size:18px}
-  .uni-action{width:100%;margin-top:12px;border:none;border-radius:18px;padding:15px;font:inherit;font-weight:800;font-size:17px;color:#fff;background:linear-gradient(90deg,#fc72ff,#8a5cff);cursor:pointer}
-  .uni-action:active{transform:translateY(1px)}
+  /* ---- Aerodrome-style swap (simulated, self-contained dark theme) ---- */
+  .aero{max-width:460px;margin:0 auto;background:#0b1222;border:1px solid #1b2740;border-radius:22px;padding:16px;color:#e7edf9;box-shadow:0 12px 44px rgba(0,0,0,.4)}
+  .aero-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .aero-tabs{display:flex;gap:4px}
+  .aero-tab{background:transparent;border:none;color:#7f8dac;font:inherit;font-weight:800;font-size:16px;padding:6px 12px;border-radius:12px;cursor:pointer}
+  .aero-tab.active{color:#fff;background:#16203a}
+  .aero-connect{background:#2f5bff;color:#fff;border:none;border-radius:13px;padding:8px 14px;font:inherit;font-weight:700;font-size:13px;cursor:pointer}
+  .aero-connect.on{background:#16213a;color:#cdd9f2}
+  .aero-sim{background:rgba(47,91,255,.1);border:1px dashed #3b5bfd;color:#aeb9d6;font-size:11.5px;border-radius:12px;padding:8px 11px;margin:4px 0 12px;text-align:center}
+  .aero-box{background:#0e1627;border:1px solid #1b2740;border-radius:18px;padding:14px 16px}
+  .aero-box+.aero-box{margin-top:6px}
+  .aero-bh{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;gap:8px}
+  .aero-bh .lbl{font-size:15px;font-weight:700;color:#cdd9f2}
+  .aero-bh .bal{font-size:12.5px;color:#7f8dac;text-align:right}
+  .aero-row{display:flex;align-items:center;gap:10px}
+  .aero-pill{display:inline-flex;align-items:center;gap:7px;background:#17223b;border:1px solid #243356;border-radius:999px;padding:7px 12px;font-weight:800;white-space:nowrap;color:#fff;font-size:15px}
+  .aero-pill.gold{border-color:#6a5420}
+  .aero-pill .ic{width:20px;height:20px;border-radius:50%;object-fit:contain}
+  .aero-pill .chev{color:#7f8dac;font-size:10px}
+  .aero-amt{flex:1;min-width:0;background:transparent;border:none;outline:none;text-align:right;font:inherit;font-size:30px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+  .aero-amt::placeholder{color:#55618a}
+  .aero-amt.addr{font-size:16px;text-align:left}
+  .aero-amt::-webkit-outer-spin-button,.aero-amt::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .aero-sub{text-align:right;font-size:12.5px;color:#7f8dac;margin-top:6px;min-height:16px}
+  .aero-mid{position:relative;height:1px;background:#1b2740;margin:15px 4px}
+  .aero-arrow{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:#16213a;border:1px solid #243356;color:#7f9bef;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .aero-action{width:100%;margin-top:14px;border:none;border-radius:16px;padding:15px;font:inherit;font-weight:800;font-size:16px;color:#fff;background:#2f5bff;cursor:pointer}
+  .aero-action:hover{background:#3f68ff}
+  .aero-action:active{transform:translateY(1px)}
+  @media(max-width:480px){.aero{padding:12px;border-radius:18px}.aero-amt{font-size:26px}}
   .wmodal{position:fixed;inset:0;background:rgba(5,10,22,.62);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
   .wmodal[hidden]{display:none}
   .wmodal-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;width:100%;max-width:340px}
@@ -221,9 +228,6 @@
     .stat .v.big{font-size:24px}
     .actbtn{flex:1 1 100%}
     .card h2{font-size:16px}
-    .uni{border-radius:18px;padding:12px}
-    .uni-amt{font-size:26px}
-    .uni-action{padding:14px;font-size:16px}
     .iconbtn{padding:6px 9px;font-size:12px}
   }
 </style>
@@ -240,10 +244,6 @@
   <div class="mascot"><div class="face" id="mFace"><img src="/bull-logo.png" class="bullimg" alt=""></div><div class="say" id="mSay"></div></div>
 
   <nav class="tabs" id="tabs"></nav>
-  <div class="actions" id="actions">
-    <button class="tab actbtn" data-t="invest">💠 Mint / Redeem</button>
-    <button class="tab actbtn" data-t="swap">🔄 Swap / Send</button>
-  </div>
 
   <!-- DASHBOARD -->
   <section data-view="dashboard">
@@ -308,47 +308,46 @@
     </div>
   </section>
 
-  <!-- SWAP (DEX-style, simulated) -->
+  <!-- SWAP (Aerodrome-style, simulated) -->
   <section data-view="swap" hidden>
-    <div class="uni">
-      <div class="uni-top">
-        <div class="uni-tabs">
-          <button class="uni-tab active" data-swaptab="swap">Swap</button>
-          <button class="uni-tab" data-swaptab="send">Send</button>
+    <div class="aero">
+      <div class="aero-top">
+        <div class="aero-tabs">
+          <button class="aero-tab active" data-swaptab="swap">Swap</button>
+          <button class="aero-tab" data-swaptab="send">Send</button>
         </div>
-        <button class="uni-connect" id="wConnect">Connect wallet</button>
+        <button class="aero-connect" id="wConnect">Connect wallet</button>
       </div>
-      <div class="uni-sim">🧪 <b>Simulated</b> practice interface — styled to feel familiar. Not real, not affiliated with Unispace/Uniswap. No real funds, no keys, nothing on-chain.</div>
+      <div class="aero-sim">🧪 <b>Simulated practice screen</b> — styled to resemble Aerodrome. Not the real Aerodrome and not affiliated with it. No real funds, no wallet keys, nothing on-chain.</div>
 
       <div data-swappane="swap">
-        <div class="uni-box">
-          <div class="uni-lbl">You pay</div>
-          <div class="uni-row"><input class="uni-amt" id="swapAmt" type="number" placeholder="0" min="0"><span class="uni-pill">💵 USDC</span></div>
-          <div class="uni-sub">Test USDC balance: <span id="wUsdc">—</span></div>
+        <div class="aero-box">
+          <div class="aero-bh"><span class="lbl">Sell</span><span class="bal">Balance <span id="wUsdc">—</span></span></div>
+          <div class="aero-row"><span class="aero-pill">💵 USDC <span class="chev">▾</span></span><input class="aero-amt" id="swapAmt" type="number" placeholder="0" min="0"></div>
+          <div class="aero-sub">Test USDC · simulated balance</div>
         </div>
-        <div class="uni-arrow">↓</div>
-        <div class="uni-box">
-          <div class="uni-lbl">You receive</div>
-          <div class="uni-row"><input class="uni-amt" id="swapOut" type="text" placeholder="0" readonly><span class="uni-pill gold"><img src="/coin-logo.png" class="uni-ic" alt="">BC25</span></div>
-          <div class="uni-sub" id="swapQuote"></div>
+        <div class="aero-mid"><div class="aero-arrow">↓</div></div>
+        <div class="aero-box">
+          <div class="aero-bh"><span class="lbl">Buy</span><span class="bal">BC25</span></div>
+          <div class="aero-row"><span class="aero-pill gold"><img src="/coin-logo.png" class="ic" alt="">BC25 <span class="chev">▾</span></span><input class="aero-amt" id="swapOut" type="text" placeholder="0" readonly></div>
+          <div class="aero-sub" id="swapQuote"></div>
         </div>
-        <button class="uni-action" id="swapBtn">Connect wallet</button>
+        <button class="aero-action" id="swapBtn">Connect wallet</button>
       </div>
 
       <div data-swappane="send" hidden>
-        <div class="uni-box">
-          <div class="uni-lbl">You send</div>
-          <div class="uni-row"><input class="uni-amt" id="sendAmt" type="number" placeholder="0" min="0"><span class="uni-pill gold"><img src="/coin-logo.png" class="uni-ic" alt="">BC25</span></div>
-          <div class="uni-sub">BC25 is a normal transferable ERC token.</div>
+        <div class="aero-box">
+          <div class="aero-bh"><span class="lbl">Send</span><span class="bal">BC25 is a free-transfer token</span></div>
+          <div class="aero-row"><span class="aero-pill gold"><img src="/coin-logo.png" class="ic" alt="">BC25 <span class="chev">▾</span></span><input class="aero-amt" id="sendAmt" type="number" placeholder="0" min="0"></div>
         </div>
-        <div class="uni-box">
-          <div class="uni-lbl">To</div>
-          <div class="uni-row"><input class="uni-amt addr" id="sendTo" type="text" placeholder="vitalik.eth or 0x…"></div>
+        <div class="aero-box">
+          <div class="aero-bh"><span class="lbl">To</span></div>
+          <div class="aero-row"><input class="aero-amt addr" id="sendTo" type="text" placeholder="vitalik.eth or 0x…"></div>
         </div>
-        <button class="uni-action" id="sendBtn">Connect wallet</button>
+        <button class="aero-action" id="sendBtn">Connect wallet</button>
       </div>
     </div>
-    <p class="muted sm" style="max-width:440px;margin:12px auto 0;text-align:center">This mimics a DEX swap screen for familiarity. On a real exchange you'd buy BC25 from other holders (no protocol fee, just a small spread); arbitragers keep the market price near NAV. Mint / Redeem (at NAV, with a fee) is the other half of the two-market model.</p>
+    <p class="muted sm" style="max-width:460px;margin:12px auto 0;text-align:center">This mimics a DEX swap screen for familiarity. On a real exchange you'd buy BC25 from other holders (no protocol fee, just a small spread); arbitragers keep the market price near NAV. Mint / Redeem (at NAV, with a fee) is the other half of the two-market model.</p>
   </section>
 
   <!-- fake wallet modal (simulated) -->
@@ -509,7 +508,7 @@
   function toast(m){tEl.textContent=m;tEl.classList.add("show");clearTimeout(tT);tT=setTimeout(function(){tEl.classList.remove("show");},2200);}
 
   // ---- tabs ----
-  var VIEWS=[["dashboard","Dashboard"],["time","🕰️ Time Machine"],["bear","🐻 Survive the Bear"],["stake","Stake"]];
+  var VIEWS=[["dashboard","Dashboard"],["swap","🔄 Swap"],["invest","💠 Mint / Redeem"],["stake","Stake"],["time","🕰️ Time Machine"],["bear","🐻 Survive the Bear"]];
   var tabsEl=document.getElementById("tabs");
   tabsEl.innerHTML=VIEWS.map(function(v,i){return '<button class="tab'+(i===0?' active':'')+'" data-t="'+v[0]+'">'+v[1]+'</button>';}).join("");
   tabsEl.insertAdjacentHTML('beforeend','<a class="tab" href="/arcade.html">🎮 Games</a>');
@@ -521,7 +520,6 @@
   }
   function onTab(e){var b=e.target.closest('.tab');if(!b)return;var t=b.getAttribute('data-t');if(!t)return;show(t);}
   tabsEl.addEventListener('click',onTab);
-  document.getElementById('actions').addEventListener('click',onTab);
 
   // ---- basket (illustrative) ----
   var BASKET=[["Bitcoin","BTC",9,"#f7931a"],["Ethereum","ETH",8,"#627eea"],["Solana","SOL",8,"#14f195"],
@@ -741,9 +739,9 @@
   document.getElementById("wClose").addEventListener("click",closeWallet);
   document.getElementById("wModal").addEventListener("click",function(e){if(e.target===this)closeWallet();});
   document.querySelectorAll(".wopt").forEach(function(b){b.addEventListener("click",function(){setConnected(b.getAttribute("data-w"));});});
-  document.querySelectorAll(".uni-tab").forEach(function(t){t.addEventListener("click",function(){
+  document.querySelectorAll(".aero-tab").forEach(function(t){t.addEventListener("click",function(){
     var which=t.getAttribute("data-swaptab");
-    document.querySelectorAll(".uni-tab").forEach(function(x){x.classList.toggle("active",x===t);});
+    document.querySelectorAll(".aero-tab").forEach(function(x){x.classList.toggle("active",x===t);});
     document.querySelectorAll("[data-swappane]").forEach(function(p){p.hidden=p.getAttribute("data-swappane")!==which;});
   });});
 
