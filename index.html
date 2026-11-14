@@ -77,6 +77,31 @@
   .stat .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .stat .v{font-size:22px;font-weight:800;color:var(--ink);margin-top:3px}
   .stat .v.big{font-size:27px}
+  /* ---- allocation baskets (donuts) ---- */
+  .alloc{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+  @media(max-width:620px){.alloc{grid-template-columns:1fr}}
+  .bk{border:2px solid var(--bkc);border-radius:14px;overflow:hidden;background:var(--surface-2);display:flex;flex-direction:column;min-width:0}
+  .bk-h{background:linear-gradient(180deg,var(--bkc),var(--bkc2));color:#fff;text-align:center;padding:9px 8px 8px}
+  .bk-h b{display:block;font-family:var(--f-display);font-size:16px;letter-spacing:.02em;text-transform:uppercase;line-height:1.15}
+  .bk-h span{display:block;font-family:var(--f-mono);font-size:12px;opacity:.92;margin-top:2px}
+  .bk.alt .bk-h{color:#201700}
+  .bk-b{padding:10px 12px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;flex:1}
+  .donut{width:100%;max-width:170px;aspect-ratio:1;display:block}
+  .donut .seg{transition:stroke-dasharray 1.1s cubic-bezier(.2,.8,.2,1),opacity .2s,stroke-width .2s;cursor:default}
+  .donut.dim .seg{opacity:.35} .donut .seg.on{opacity:1;stroke-width:17}
+  .donut .c1{font-family:var(--f-body);font-weight:800;fill:var(--ink);font-size:17px}
+  .donut .c2{font-family:var(--f-mono);fill:var(--muted);font-size:8.5px;letter-spacing:.06em}
+  .bk-l{width:100%;font-size:13px}
+  .bk-l .li{display:flex;align-items:center;gap:7px;padding:2px 4px;border-radius:6px}
+  .bk-l .li:hover{background:var(--surface)}
+  .bk-l i{width:10px;height:10px;border-radius:50%;flex:none}
+  .bk-l .t{font-weight:700;flex:1;min-width:0}
+  .bk-l .p{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+  .bk-l .o{font-family:var(--f-mono);font-size:11px;color:var(--muted);width:44px;text-align:right}
+  .bk-empty{color:var(--muted);font-size:12.5px;text-align:center;padding:6px 0}
+  .alloc-top{display:flex;height:12px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+  .alloc-top span{display:block;height:100%;transition:width 1s ease}
+  .alloc-cap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--muted);margin-top:5px}
   .pvbox{display:flex;align-items:stretch;gap:14px}
   .pvbox .pvl{flex:1;min-width:0}
   .pvbox .pvr{flex:1;min-width:0;border-left:1px solid var(--line);padding-left:14px;display:flex;flex-direction:column;justify-content:center}
@@ -249,7 +274,7 @@
       <p class="sm muted" id="joinNote" style="margin-top:8px">No spam. This is not an offer, and not a promise of any reward, token, airdrop, or financial return.</p>
     </div>
     <div class="card" style="margin-top:14px">
-      <h3>What's inside BC25 <span class="muted sm" id="basketNote">(illustrative weights)</span></h3>
+      <h3>Current allocations <span class="muted sm" id="basketNote">(illustrative weights)</span></h3>
       <div id="basket"></div>
     </div>
     <div class="card" style="margin-top:14px">
@@ -501,7 +526,64 @@
   // ---- basket (illustrative) ----
   var BASKET=[["Bitcoin","BTC",9,"#f7931a"],["Ethereum","ETH",8,"#627eea"],["Solana","SOL",8,"#14f195"],
     ["Rotating alts","12 coins",32,"#9a7420"],["Stablecoins","USDC/USDT/DAI",17,"#37b26b"],["Gold","PAXG",5,"#d9b24a"]];
+  // ---- flashy allocation view: 3 baskets as animated donuts (live Stage B weights) ----
+  var COINCOL={BTC:"#f7931a",ETH:"#8a92b2",SOL:"#9945ff",PAXG:"#e3b341",XAUT:"#c9a227",USDT:"#26a17b",USDC:"#2775ca",DAI:"#fb923c",
+    DOGE:"#4f9cf9",XRP:"#3cc35c",ADA:"#a25ddc",LINK:"#2ec4d6",AVAX:"#f08a3c",SUI:"#1f5fbf",TRX:"#ef4444",ZEC:"#eab308",
+    BNB:"#84cc16",HYPE:"#5eead4",XMR:"#ff6600",XLM:"#94a3b8",HBAR:"#6b7280",LTC:"#a5b4fc",TON:"#0098ea",CRO:"#1e3a8a",
+    BCH:"#8dc351",DOT:"#e6007a",NEAR:"#34d399",APT:"#64748b",MNT:"#10b981"};
+  var ALTPAL=["#4f9cf9","#3cc35c","#a25ddc","#2ec4d6","#f08a3c","#1f5fbf","#ef4444","#f4b728","#5eead4","#fb7185"];
+  var LEAD={BTC:1,ETH:1,SOL:1}, DEF={USDT:1,USDC:1,DAI:1,PAXG:1,XAUT:1};
+  function donutSVG(items,tot,centerTop,centerSub){
+    var R=40,C=2*Math.PI*R,acc=0,segs="";
+    items.forEach(function(it,i){
+      var frac=tot?it.w/tot:0,len=Math.max(0,frac*C-(items.length>1?1.2:0));
+      segs+='<circle class="seg" data-i="'+i+'" cx="60" cy="60" r="'+R+'" fill="none" stroke="'+it.c+'" stroke-width="15" '+
+        'stroke-dasharray="0 '+C+'" data-len="'+len+'" stroke-dashoffset="'+(-acc*C)+'" transform="rotate(-90 60 60)"><title>'+it.t+' '+fmt(frac*100,1)+'%</title></circle>';
+      acc+=frac;
+    });
+    return '<svg class="donut" viewBox="0 0 120 120" role="img" aria-label="'+centerSub+'">'+
+      '<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="var(--line)" stroke-width="15"/>'+segs+
+      '<text class="c1" x="60" y="62" text-anchor="middle">'+centerTop+'</text>'+
+      '<text class="c2" x="60" y="75" text-anchor="middle">'+centerSub+'</text></svg>';
+  }
+  function renderAlloc(){
+    var el=document.getElementById("basket");
+    var g={lead:[],alt:[],def:[]};
+    STAGEB.weights.forEach(function(w){var k=LEAD[w.label]?"lead":DEF[w.label]?"def":"alt";g[k].push({t:w.label,w:+w.w});});
+    var sum=function(a){return a.reduce(function(x,y){return x+y.w;},0);};
+    var all=sum(g.lead)+sum(g.alt)+sum(g.def)||1;
+    var B=[["lead","Leadership basket","#1d4ed8","#2563eb",""],["alt","Alt basket","#caa33a","#e5bd4d"," alt"],["def","Defensive basket","#15803d","#22a052",""]];
+    var top='<div class="alloc-top">'+B.map(function(b){return '<span style="width:'+(sum(g[b[0]])/all*100)+'%;background:'+b[3]+'" title="'+b[1]+'"></span>';}).join("")+'</div>'+
+      '<div class="alloc-cap">'+B.map(function(b){return '<span><b style="color:'+b[3]+'">■</b> '+b[1].replace(" basket","")+' '+fmt(sum(g[b[0]])/all*100,1)+'%</span>';}).join("")+'</div>';
+    var cards=B.map(function(b){
+      var items=g[b[0]].sort(function(x,y){return y.w-x.w;}),tot=sum(items),share=tot/all*100,ai=0;
+      items.forEach(function(it){it.c=COINCOL[it.t]||ALTPAL[(ai++)%ALTPAL.length];});
+      var body=items.length&&tot>0
+        ? donutSVG(items,tot,fmt(share,1)+"%","OF BC25")+'<div class="bk-l">'+items.map(function(it,i){
+            return '<div class="li" data-i="'+i+'"><i style="background:'+it.c+'"></i><span class="t">'+it.t+'</span><span class="p">'+fmt(it.w/tot*100,1)+'%</span><span class="o">'+fmt(it.w/all*100,1)+'%</span></div>';}).join("")+'</div>'
+        : '<div class="bk-empty">Nothing held in this basket today.</div>';
+      return '<div class="bk'+b[4]+'" style="--bkc:'+b[2]+';--bkc2:'+b[3]+'"><div class="bk-h"><b>'+b[1]+'</b><span>('+fmt(share,1)+'% of BC25)</span></div><div class="bk-b">'+body+'</div></div>';
+    }).join("");
+    el.innerHTML=top+'<div class="alloc">'+cards+'</div>'+
+      '<div class="alloc-cap" style="margin-top:8px"><span>Left %: share within the basket · right %: share of all of BC25</span><span>Updated nightly</span></div>';
+    // animate the donuts in
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      el.querySelectorAll(".donut .seg").forEach(function(c){c.setAttribute("stroke-dasharray",c.getAttribute("data-len")+" 999");});
+    });});
+    // legend hover highlights its slice
+    el.querySelectorAll(".bk").forEach(function(card){
+      var svg=card.querySelector(".donut");if(!svg)return;
+      card.querySelectorAll(".li").forEach(function(li){
+        li.addEventListener("mouseenter",function(){svg.classList.add("dim");var s=svg.querySelector('.seg[data-i="'+li.getAttribute("data-i")+'"]');if(s)s.classList.add("on");});
+        li.addEventListener("mouseleave",function(){svg.classList.remove("dim");svg.querySelectorAll(".seg.on").forEach(function(s){s.classList.remove("on");});});
+      });
+    });
+  }
   function renderBasket(){
+    if(STAGEB&&STAGEB.weights&&STAGEB.weights.length){
+      var wh=document.getElementById("basketNote");if(wh)wh.textContent="(live Stage B weights, as of "+STAGEB.asof+")";
+      try{renderAlloc();return;}catch(e){/* fall back to the plain bar list below */}
+    }
     var rows;
     if(STAGEB&&STAGEB.weights&&STAGEB.weights.length){
       var pal={BTC:"#f7931a",ETH:"#627eea",SOL:"#14f195",PAXG:"#d9b24a",USDT:"#26a17b",USDC:"#2775ca",DAI:"#f5ac37"};
