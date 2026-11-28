@@ -1,0 +1,7 @@
+BC25 Market Mode data — SHA-256 of each published file
+as_of 2026-11-27 · generated_at_utc 2026-11-28T02:20:19.931444+00:00
+
+a6018c49dc35561702d6608b9bde88a43f51575c9cf8b7ee28700231058ff729  market-mode/data/current.json
+bbaddb58f2fbe86d00c51122cf3830eed943c5e7a8564ae9e428859b9ae5daad  market-mode/data/mode_history.json
+3a1fb34e8670bba97a8a5472ecbad1e7a89967d6797a0015e8ffa9cc1ccacf71  market-mode/data/mode_changes.json
+894f350b9558d0fbaeeb75431154d1d1dee588a1dacf7b53c14b8e727cdb4039  market-mode/data/btc_daily.json

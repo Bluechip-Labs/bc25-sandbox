@@ -37,14 +37,35 @@ try {
   & node $Gen
   if ($LASTEXITCODE -ne 0) { throw "gen_stageb failed (exit $LASTEXITCODE)" }
 
+  # 2b) Market Mode data (point-in-time record + BTC/USD). NON-BLOCKING: if this
+  #     fails (BTC fetch, validation), the Market Mode files stay at the previous
+  #     day and everything else still publishes. Failure is logged loudly.
+  Log "step 2b: regenerating Market Mode data (gen_terminal.js)"
+  $prevEAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"   # node writes errors to stderr; don't let that abort the run
+  try {
+    $mm = & node (Join-Path $Sandbox "tools\gen_terminal.js") 2>&1 | ForEach-Object { "$_" }
+    $mmExit = $LASTEXITCODE
+    $mm | ForEach-Object { Log "  $_" }
+    if ($mmExit -ne 0) {
+      Log "WARNING: gen_terminal failed (exit $mmExit) - Market Mode data NOT updated today"
+    } else {
+      $dg = & node (Join-Path $Sandbox "tools\pit_diagnostic.js") 2>&1 | ForEach-Object { "$_" }   # dev-only report, git-ignored
+      $dg | ForEach-Object { Log "  $_" }
+    }
+  } catch {
+    Log "WARNING: Market Mode step threw: $_ - Market Mode data NOT updated today"
+  } finally {
+    $ErrorActionPreference = $prevEAP
+  }
+
   # 3) commit + push only when stageb.json actually changed
   #    (also version nav_ledger.json — the fixed-anchor NAV ledger that keeps
   #    the per-share price stable across runs; it changes whenever stageb does)
   Log "step 3/3: publishing"
   Set-Location $Sandbox
-  if (git status --porcelain -- stageb.json) {
+  if (git status --porcelain -- stageb.json market-mode/data proofs) {
     $asof = (& node -e "process.stdout.write(require('./stageb.json').asof)")
-    git add stageb.json nav_ledger.json
+    git add stageb.json nav_ledger.json market-mode/data proofs
     git commit -m "data: refresh Stage B snapshot (asof $asof)" | Out-Null
     git push | Out-Null
     Log "pushed stageb.json + nav_ledger.json (asof $asof)"

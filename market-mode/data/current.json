@@ -1,0 +1,67 @@
+{
+ "as_of_date": "2026-11-27",
+ "generated_at_utc": "2026-11-28T02:20:19.931444+00:00",
+ "regime": "bear_preservation",
+ "regime_since": "2026-11-06",
+ "days_in_regime": 22,
+ "safety_mode": "safe",
+ "baskets": {
+  "defensive_pct": 87.5,
+  "leaders_pct": 4.03,
+  "alts_pct": 8.47
+ },
+ "top_holdings": [
+  {
+   "asset": "USDT",
+   "id": "tether",
+   "pct": 22.36
+  },
+  {
+   "asset": "USDC",
+   "id": "usd-coin",
+   "pct": 22.36
+  },
+  {
+   "asset": "DAI",
+   "id": "dai",
+   "pct": 22.36
+  },
+  {
+   "asset": "PAXG",
+   "id": "pax-gold",
+   "pct": 20.42
+  },
+  {
+   "asset": "TRX",
+   "id": "tron",
+   "pct": 3.87
+  },
+  {
+   "asset": "ZEC",
+   "id": "zcash",
+   "pct": 3.84
+  },
+  {
+   "asset": "BTC",
+   "id": "bitcoin",
+   "pct": 1.45
+  },
+  {
+   "asset": "ETH",
+   "id": "ethereum",
+   "pct": 1.29
+  },
+  {
+   "asset": "SOL",
+   "id": "solana",
+   "pct": 1.29
+  },
+  {
+   "asset": "BNB",
+   "id": "binancecoin",
+   "pct": 0.14
+  }
+ ],
+ "record_start": "2026-07-25",
+ "btc_source": "CoinGecko BTC/USD daily price (00:00 UTC)"
+}

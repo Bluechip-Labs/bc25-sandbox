@@ -6,3 +6,5 @@ node_modules/
 
 # daily data pipeline
 tools/daily_update.log
+# dev-only re-simulation diagnostic (never publish)
+tools/pit_diagnostic.csv

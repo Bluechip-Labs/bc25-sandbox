@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bluechip Defender · Market Mode</title>
+<meta name="description" content="Bluechip Defender: a rules-based defensive crypto index. Try a simulated swap into BC25 at its real nightly paper-test NAV. Simulation only, no real funds.">
+<meta property="og:site_name" content="BC25Defender.io">
+<meta property="og:title" content="Bluechip Defender · Market Mode">
+<meta property="og:description" content="A rules-based defensive crypto index. Try a simulated swap at the real nightly paper-test NAV. Simulation only.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#090e1f">
+<script>try{if(localStorage.getItem("bcd_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}</script>
+<link rel="icon" type="image/png" href="/favicon-64.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script defer src="/analytics.js"></script>
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<style>
+  :root{
+    --bg:#090e1f; --card:#11162b; --pill:#1b2039; --pill-hover:#232948; --nav-active:#161b32;
+    --line:#343c5e; --line-soft:#232a47; --blue:#2660f5; --blue-hover:#3a70ff; --blue-soft:rgba(38,96,245,.12);
+    --fg:#ffffff; --fg2:#e6e9f5; --fg3:#c9cfe3; --muted:#8a93b2; --dim:#5b6385; --gold:#e8b52e; --up:#3ac17e; --down:#ef5b6b; --warn:#f5a524; --shadow:0 10px 30px rgba(0,0,0,.4);
+    --f:"Inter","InterVariable",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  html[data-theme="light"]{
+    --bg:#f3f5fa; --card:#ffffff; --pill:#eef1f7; --pill-hover:#e3e8f2; --nav-active:#e6eaf4;
+    --line:#d3d9e8; --line-soft:#e1e6f0; --blue-soft:rgba(38,96,245,.10);
+    --fg:#0b1124; --fg2:#1f2741; --fg3:#3e4766; --muted:#5f6886; --dim:#9aa2bd; --gold:#b98a12; --up:#16a05a; --down:#d63b4d;
+    --shadow:0 10px 30px rgba(16,24,48,.15);
+  }
+  html[data-theme="light"] .card,html[data-theme="light"] footer{box-shadow:0 1px 3px rgba(16,24,48,.06)}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--fg);font-family:var(--f);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;color:inherit}
+  .tnum{font-variant-numeric:tabular-nums}
+
+  /* top banner */
+  .banner{background:var(--blue);color:#fff;font-size:14px;font-weight:500;text-align:center;padding:14px 16px;display:flex;align-items:center;justify-content:center;gap:10px}
+  .banner svg{flex:none;opacity:.95}
+  .banner b{font-weight:700}
+
+  /* header */
+  header.top{display:flex;align-items:center;gap:28px;padding:22px 32px;max-width:1540px;width:100%;margin:0 auto}
+  .brand{display:flex;align-items:center;gap:10px;flex:none}
+  .brand img{width:34px;height:34px;object-fit:contain}
+  .brand .wm{font-weight:800;font-size:19px;letter-spacing:.06em;text-transform:uppercase;line-height:1}
+  .brand .wm span{color:var(--gold)}
+  nav.main{display:flex;align-items:center;gap:6px}
+  nav.main a{font-size:15px;font-weight:500;padding:6px 12px;border-radius:9999px;color:var(--fg2);transition:background .15s,color .15s;white-space:nowrap}
+  nav.main a:hover{color:var(--fg);background:var(--nav-active)}
+  nav.main a.active{background:var(--nav-active);color:var(--fg)}
+  nav.main a.soon{color:var(--dim);cursor:default}
+  nav.main a.soon:hover{background:none;color:var(--dim)}
+  nav.main a.soon i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin-left:6px;vertical-align:1px}
+  .hdr-r{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500}
+  .simdot{width:10px;height:10px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 3px rgba(245,165,36,.18)}
+  .hdr-r .bal{color:var(--muted)}
+  .hdr-r .bal b{color:var(--fg);font-weight:600}
+
+  /* swap card */
+  main{flex:1;display:flex;flex-direction:column;align-items:center;padding:42px 16px 80px}
+  .swap{width:100%;max-width:576px}
+  .card{background:var(--card);border-radius:16px;padding:28px 32px 30px}
+  .lbl{display:flex;justify-content:space-between;align-items:center;font-size:14px;margin:0 8px 10px}
+  .lbl .t{font-weight:600}
+  .lbl .b{color:var(--muted);font-size:13px}
+  .lbl .b b{color:var(--fg);font-weight:500;margin-left:4px}
+  .lbl .b button{background:none;border:0;color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;padding:0 0 0 8px}
+  .box{border:1px solid var(--line-soft);border-radius:12px;padding:22px 20px 18px;display:flex;align-items:center;gap:14px;transition:border-color .15s}
+  .box.focus{border-color:var(--blue)}
+  .tok{display:flex;align-items:center;gap:9px;background:var(--pill);border:0;border-radius:9999px;padding:8px 16px 8px 10px;font-size:15px;font-weight:600;flex:none;cursor:default}
+  .tok img,.tok .ic{width:28px;height:28px;border-radius:50%;flex:none}
+  .tok .ic{display:grid;place-items:center;background:#2775ca;color:#fff;font-weight:800;font-size:14px}
+  .tok img{object-fit:contain}
+  .amt{flex:1;min-width:0;text-align:right}
+  .amt input{width:100%;background:none;border:0;outline:0;color:var(--fg);font-family:var(--f);font-size:28px;font-weight:500;text-align:right;padding:0;font-variant-numeric:tabular-nums}
+  .amt input::placeholder{color:var(--dim)}
+  .amt input[readonly]{cursor:default}
+  .amt .usd{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .flipwrap{position:relative;height:66px;display:flex;align-items:center;justify-content:center}
+  .flipwrap::before{content:"";position:absolute;left:20px;right:20px;top:50%;border-top:1px solid var(--line-soft)}
+  .flip{position:relative;width:34px;height:34px;border-radius:50%;border:0;background:var(--card);cursor:pointer;display:grid;place-items:center;outline:6px solid var(--card)}
+  .flip span{width:32px;height:32px;border-radius:50%;background:var(--blue-soft);display:grid;place-items:center;transition:background .15s,transform .25s}
+  .flip:hover span{background:rgba(38,96,245,.25)}
+  .flip.spin span{transform:rotate(180deg)}
+
+  .quote{margin:22px 8px 0;font-size:13px;color:var(--muted);display:none}
+  .quote.show{display:block}
+  .quote .ln{display:flex;justify-content:space-between;padding:4px 0}
+  .quote .ln b{color:var(--fg2);font-weight:500}
+
+  .cta{display:block;width:100%;margin-top:30px;background:var(--blue);color:#fff;border:0;border-radius:9999px;padding:14px 20px;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s}
+  .cta:hover{background:var(--blue-hover)}
+  .cta:disabled{background:var(--pill);color:var(--muted);cursor:not-allowed}
+
+  .navline{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 8px 0;font-size:13px;color:var(--muted)}
+  .navline b{color:var(--fg);font-weight:600}
+  .navline .reg{display:inline-flex;flex-direction:column;align-items:flex-end;gap:2px}
+  .navline .regk{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+  .navline .regv{display:inline-flex;align-items:center;gap:6px;color:var(--fg2);font-weight:500}
+  .navline .reg i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+  .navline button{background:none;border:0;color:var(--muted);font-size:12.5px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+  .navline button:hover{color:var(--fg)}
+
+  /* footer */
+  footer{max-width:1476px;width:calc(100% - 64px);margin:0 auto 32px;background:var(--card);border-radius:16px;padding:40px 38px 32px}
+  .flinks{display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px;font-size:14px;color:var(--fg3)}
+  .flinks a:hover{color:var(--fg)}
+  .flinks .sep{width:1px;height:16px;background:var(--line)}
+  .ftop{display:flex;justify-content:space-between;align-items:center;gap:16px}
+  .themebtn{flex:none;width:54px;height:38px;border-radius:9999px;border:0;background:var(--pill);color:var(--fg);display:grid;place-items:center;cursor:pointer;transition:background .15s}
+  .themebtn:hover{background:var(--pill-hover)}
+  .themebtn .moon{display:none} html[data-theme="light"] .themebtn .sun{display:none} html[data-theme="light"] .themebtn .moon{display:block}
+  .social{display:flex;gap:14px;margin-top:30px}
+  .social a{width:32px;height:32px;border-radius:50%;background:var(--fg);color:var(--card);display:grid;place-items:center;transition:opacity .15s}
+  .social a:hover{opacity:.8}
+  .fdisc{margin-top:28px;max-width:860px;font-size:12.5px;color:var(--muted);line-height:1.6}
+  .fbot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:28px;font-size:13px;color:var(--dim)}
+  .fbot a{color:var(--fg3)}
+  .fbot a:hover{color:var(--fg)}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(30px);background:var(--pill);border:1px solid var(--line);color:var(--fg);padding:12px 18px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;z-index:50;max-width:90vw;text-align:center;box-shadow:var(--shadow)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:900px){
+    header.top{flex-wrap:wrap;gap:14px 20px;padding:18px 16px}
+    nav.main{order:3;width:100%;overflow-x:auto}
+    .hdr-r .bal{display:none}
+  }
+  @media(max-width:520px){
+    .banner{font-size:13px;padding:11px 14px}
+    .brand .wm{font-size:16px}
+    main{padding-top:24px}
+    .card{padding:20px 16px 22px}
+    .box{padding:16px 14px 14px}
+    .amt input{font-size:24px}
+    footer{width:calc(100% - 32px);padding:28px 20px 24px}
+  }
+  :root{--b-def:#22a052;--b-lead:#2563eb;--b-alt:#e5bd4d}
+  /* ---- Market Mode page ---- */
+  .wide{width:100%;max-width:1100px}
+  .ahd{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:0 4px 16px}
+  .ahd h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.01em}
+  .ahd .sub{color:var(--muted);font-size:14px;margin-top:4px}
+  .delay{display:none;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);color:var(--fg);border-radius:12px;padding:11px 14px;font-size:14px;margin-bottom:14px}
+  .delay.show{display:block}
+  .delay b{color:var(--warn)}
+  .status{display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr;gap:0;padding:0;overflow:hidden}
+  .status > div{padding:18px 20px;border-right:1px solid var(--line-soft);min-width:0}
+  .status > div:last-child{border-right:0}
+  .status .k{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+  .status .v{font-size:18px;font-weight:700;margin-top:5px;font-variant-numeric:tabular-nums}
+  .status .s{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-size:17px;font-weight:700}
+  .badge i{width:11px;height:11px;border-radius:3px;flex:none}
+  .disc2{margin:14px 0;border:1px solid var(--line-soft);border-left:3px solid var(--warn);border-radius:10px;padding:11px 14px;font-size:13px;color:var(--fg2);background:var(--card)}
+  .disc2 .src{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+  .chead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .chead h2{margin:0;font-size:16px;font-weight:700}
+  .ranges{display:flex;gap:4px;background:var(--pill);border-radius:9999px;padding:3px}
+  .ranges button{background:none;border:0;border-radius:9999px;padding:5px 12px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+  .ranges button:hover{color:var(--fg)}
+  .ranges button.on{background:var(--card);color:var(--fg)}
+  .mlegend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--fg2);margin:0 2px 10px}
+  .mlegend span{display:inline-flex;align-items:center;gap:6px}
+  .mlegend i{width:10px;height:10px;border-radius:2px}
+  .cwrap{position:relative}
+  #chart{width:100%;height:470px}
+  .tip{position:absolute;top:8px;left:8px;z-index:5;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:12.5px;min-width:180px;box-shadow:var(--shadow);display:none;font-variant-numeric:tabular-nums}
+  .tip .d{font-weight:700;margin-bottom:4px}
+  .tip .r{display:flex;justify-content:space-between;gap:14px;color:var(--muted)}
+  .tip .r b{color:var(--fg);font-weight:600}
+  .apane-l{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted);margin-top:8px}
+  .apane-l i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+  .cfoot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:10px}
+  .cfoot a{text-decoration:underline;text-underline-offset:2px}
+  .grid2{display:grid;grid-template-columns:1fr 1.25fr;gap:14px;margin-top:14px}
+  .grid2 > *{min-width:0}
+  .card h3{margin:0 0 12px;font-size:16px;font-weight:700}
+  .bbar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--pill)}
+  .bbar span{display:block;height:100%}
+  .brow{display:flex;justify-content:space-between;font-size:13.5px;padding:7px 0;border-bottom:1px solid var(--line-soft)}
+  .brow:last-child{border-bottom:0}
+  .brow i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;vertical-align:-1px}
+  .brow b{font-variant-numeric:tabular-nums;font-weight:600}
+  .sublbl{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:16px 0 4px}
+  table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.t th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);padding:0 8px 8px;border-bottom:1px solid var(--line-soft)}
+  table.t td{padding:9px 8px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  table.t tr:last-child td{border-bottom:0}
+  table.t .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .mtag{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-weight:600}
+  .mtag i{width:9px;height:9px;border-radius:2px}
+  .mdesc{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .note{color:var(--muted);font-size:12px;margin-top:10px}
+  .alerts{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+  .alerts .soonbtn{background:var(--pill);color:var(--muted);border:0;border-radius:9999px;padding:10px 18px;font-weight:600;font-size:14px;cursor:not-allowed}
+  @media(max-width:900px){
+    .status{grid-template-columns:1fr 1fr}
+    .status > div:nth-child(2){border-right:0}
+    .status > div:nth-child(-n+2){border-bottom:1px solid var(--line-soft)}
+    .grid2{grid-template-columns:1fr}
+  }
+  @media(max-width:520px){
+    #chart{height:400px}
+    .status > div{padding:14px}
+    .status .v{font-size:16px}
+    .badge{font-size:15px}
+    .tscroll{overflow-x:auto}
+    table.t{font-size:12.5px}
+    table.t th,table.t td{padding-left:4px;padding-right:4px}
+    table.t th{font-size:10px}
+    .mtag{white-space:normal}
+    .mdesc{font-size:11.5px}
+  }
+</style>
+
+</head>
+<body>
+
+<div class="banner" role="note">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.3 8 11 4.6-1.7 8-6 8-11V5l-8-3Z" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <span><b>Simulation only.</b> BC25 is pre-launch. No real funds, no wallet, nothing on-chain.</span>
+</div>
+
+<header class="top">
+  <a class="brand" href="/" aria-label="Bluechip Defender home">
+    <img src="/bluechip-defender-logo.png" alt="">
+    <span class="wm">Bluechip <span>Defender</span></span>
+  </a>
+  <nav class="main" aria-label="Main">
+    <a href="/">Swap</a>
+    <a href="/allocations/">Allocations</a>
+    <a href="/market-mode/" class="active" aria-current="page">Market Mode</a>
+    <a class="soon" aria-disabled="true" title="Coming soon">Docs<i>Soon</i></a>
+  </nav>
+  <div class="hdr-r">
+    <span class="simdot" aria-hidden="true"></span>
+    <span>Simulation</span>
+  </div>
+</header>
+
+<main>
+  <div class="wide">
+    <div class="ahd">
+      <div><h1>Market Mode</h1><div class="sub">The BC25 engine's daily call, recorded as it was made each day (point-in-time).</div></div>
+    </div>
+
+    <div class="delay" id="delay" role="alert"><b>Data delayed.</b> The latest engine output is more than 36 hours old. <span id="delayTxt"></span></div>
+
+    <div class="card status" id="status">
+      <div><div class="k">Current mode</div><div class="v"><span class="badge" id="sMode"><i></i>—</span></div><div class="s" id="sSince">—</div></div>
+      <div><div class="k">Safety mode</div><div class="v" id="sSafety">—</div><div class="s">Engine data-integrity state</div></div>
+      <div><div class="k">Defensive share</div><div class="v" id="sDef">—</div><div class="s">Stablecoins + tokenized gold</div></div>
+      <div><div class="k">Engine output</div><div class="v" id="sAsof">—</div><div class="s" id="sUpd">—</div></div>
+    </div>
+
+    <div class="disc2" role="note"><b>BC25 is not launched and cannot be bought.</b> This page shows output from a paper-testing (simulated) engine. Not investment advice. Past or simulated results do not predict future results.
+      <span class="src" id="srcLine">Source: BC25 xv3.1 paper engine (point-in-time daily record) · BTC/USD from CoinGecko, daily price at 00:00 UTC.</span></div>
+
+    <div class="card">
+      <div class="chead">
+        <h2>BTC/USD with BC25 market mode</h2>
+        <div class="ranges" role="group" aria-label="Chart range">
+          <button type="button" data-r="3">3M</button><button type="button" data-r="6">6M</button><button type="button" data-r="12">1Y</button><button type="button" data-r="0" class="on">All</button>
+        </div>
+      </div>
+      <div class="mlegend" id="mlegend"></div>
+      <div class="cwrap"><div id="chart" aria-label="BTC price chart with market mode bands"></div><div class="tip" id="tip"></div></div>
+      <div class="apane-l"><span>Lower pane, share of BC25:</span><span><i style="background:var(--b-def)"></i>Defensive</span><span><i style="background:var(--b-lead)"></i>Leaders (BTC, ETH, SOL)</span><span><i style="background:var(--b-alt)"></i>Alts</span><span>Blank stretches are days with no engine run (never backfilled).</span></div>
+      <div class="cfoot"><span>Background bands and markers: the engine's mode each day and each mode change.</span>
+        <span>Charts: TradingView Lightweight Charts™ · Copyright (с) 2025 TradingView, Inc. <a href="https://www.tradingview.com/" target="_blank" rel="noopener">https://www.tradingview.com/</a></span></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Current allocation</h3>
+        <div class="bbar" id="bbar"></div>
+        <div id="brows" style="margin-top:10px"></div>
+        <div class="sublbl">Top holdings</div>
+        <div id="holds"></div>
+        <a class="note" href="/allocations/" style="display:inline-block;text-decoration:underline;text-underline-offset:2px">Full breakdown on Allocations →</a>
+      </div>
+      <div class="card">
+        <h3>What the modes mean</h3>
+        <div class="tscroll"><table class="t" id="modesT"><thead><tr><th>Mode</th><th class="n">Leaders</th><th class="n">Alts</th><th class="n">Defensive</th></tr></thead><tbody></tbody></table></div>
+        <p class="note">Base target mix for each mode. Day to day, leadership tilts and deeper-defense shifts move weight between baskets, so actual weights differ somewhat.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>Mode change log</h3>
+      <div class="tscroll"><table class="t" id="logT"><thead><tr><th>Date</th><th>Change</th><th class="n">BTC price that day</th></tr></thead><tbody></tbody></table></div>
+      <p class="note" id="logNote"></p>
+    </div>
+
+    <div class="card alerts">
+      <div><h3 style="margin:0">Mode-change alerts</h3><div class="note" style="margin-top:4px">Get notified when the engine changes mode. Not available yet.</div></div>
+      <button class="soonbtn" type="button" disabled>Coming soon</button>
+    </div>
+  </div>
+</main>
+
+
+<footer>
+  <div class="ftop">
+    <div class="flinks">
+      <a href="/allocations/">Allocations</a>
+    <a href="/market-mode/">Market Mode</a>
+      <span style="color:var(--dim)">Docs (soon)</span>
+    </div>
+    <button class="themebtn" id="themeBtn" type="button" aria-label="Switch to light mode" title="Toggle light / dark">
+      <svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+    </button>
+  </div>
+  <p class="fdisc">Bluechip Defender (BC25) is a pre-launch, rules-based defensive crypto index under research and testing. This page is a simulation: balances are test values stored in your browser, and swaps are not executed anywhere. NAV figures come from paper testing and are not a record of live trading or a prediction of future results. Nothing here is an offer, solicitation, or investment advice.</p>
+  <div class="social">
+    <a href="https://x.com/BluechipDefense" target="_blank" rel="noopener noreferrer" aria-label="Bluechip Defender on X (@BluechipDefense)" title="@BluechipDefense on X">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    </a>
+  </div>
+  <div class="fbot">
+    <span>© 2026 Bluechip Labs LLC</span>
+    <a href="https://bc25defender.io">BC25Defender.io</a>
+  </div>
+</footer>
+
+
+<script src="/vendor/lightweight-charts/lightweight-charts.standalone.production.js"></script>
+<script>
+(function(){
+  "use strict";
+  // Out of scope for v1: any BC25 performance / return comparison vs BTC (needs legal review first).
+  var SHOW_PERFORMANCE = false;
+
+  // ---- ONE shared mode config: labels, colors (colorblind-safe, risk-on blues -> bear vermillion), meaning, base targets ----
+  var MODES = {
+    strong_risk_on:   {label:"Strong risk-on",    color:"#4C8DFF", desc:"Broad, strong uptrend. Fully offensive with minimal defense.",                   t:[29.0,61.0,10.0]},
+    risk_on:          {label:"Risk-on",           color:"#39B5C9", desc:"Uptrend. Mostly offensive with a small defensive cushion.",                       t:[27.4,57.6,15.0]},
+    neutral:          {label:"Neutral",           color:"#8E98B0", desc:"Mixed signals. The baseline balanced mix.",                                       t:[25.0,52.5,22.5]},
+    staged_recovery:  {label:"Staged recovery",   color:"#A88BEB", desc:"Coming out of a defensive stretch. Risk is added back in steps.",                 t:[21.8,45.7,32.5]},
+    risk_off:         {label:"Risk-off",          color:"#F2A93B", desc:"Weakening market. Defense raised; growth weight tilted toward the leaders.",     t:[35.9,37.3,26.8]},
+    bear_preservation:{label:"Bear preservation", color:"#E4572E", desc:"Persistent downturn. Capital preservation, mostly stablecoins and gold.",        t:[4.0,8.5,87.5]}
+  };
+  var ORDER = ["strong_risk_on","risk_on","neutral","staged_recovery","risk_off","bear_preservation"];
+  var SAFETY = {normal:"Normal", safe:"Safe", degraded:"Degraded", freeze:"Freeze", emergency:"Emergency"};
+  var BASKET = {def:"#22a052", lead:"#2563eb", alt:"#e5bd4d"};
+  var STALE_HOURS = 36;
+
+  var $=function(id){return document.getElementById(id);};
+  var fmt=function(n,d){d=d==null?1:d;return Number(n).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});};
+  var usd=function(n){return n==null?"—":"$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});};
+  var M=function(k){return MODES[k]||{label:k,color:"#8E98B0",desc:"",t:null};};
+  function hexA(h,a){var n=parseInt(h.slice(1),16);return "rgba("+(n>>16&255)+","+(n>>8&255)+","+(n&255)+","+a+")";}
+  function addDays(iso,n){var d=new Date(iso+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+  function addMonths(iso,n){var d=new Date(iso+"T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+n);return d.toISOString().slice(0,10);}
+  function fmtDate(iso){var d=new Date(iso+"T00:00:00Z");return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"});}
+  function tag(k){var m=M(k);return '<span class="mtag"><i style="background:'+m.color+'"></i>'+m.label+'</span>';}
+  function isLight(){return document.documentElement.getAttribute("data-theme")==="light";}
+
+  // legend + modes table (static, from the shared config)
+  $("mlegend").innerHTML=ORDER.map(function(k){return '<span><i style="background:'+MODES[k].color+'"></i>'+MODES[k].label+'</span>';}).join("");
+  document.querySelector("#modesT tbody").innerHTML=ORDER.map(function(k){var m=MODES[k];
+    return '<tr><td>'+tag(k)+'<div class="mdesc">'+m.desc+'</div></td><td class="n">'+fmt(m.t[0])+'%</td><td class="n">'+fmt(m.t[1])+'%</td><td class="n">'+fmt(m.t[2])+'%</td></tr>';}).join("");
+
+  function getJ(f){return fetch("/market-mode/data/"+f+"?ts="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(f+" "+r.status);return r.json();});}
+
+  Promise.all([getJ("current.json"),getJ("mode_history.json"),getJ("mode_changes.json"),getJ("btc_daily.json")]).then(function(a){
+    render(a[0],a[1],a[2],a[3]);
+  }).catch(function(e){
+    $("status").innerHTML='<div style="grid-column:1/-1"><div class="k">Data unavailable</div><div class="s">The Market Mode data couldn\'t be loaded. Please try again later.</div></div>';
+  });
+
+  var chart,btcS,aAll,histMap={},btcMap={},first,last;
+
+  function render(cur,hist,chg,btc){
+    // ---- status bar ----
+    var m=M(cur.regime);
+    $("sMode").innerHTML='<i style="background:'+m.color+'"></i>'+m.label;
+    $("sSince").textContent="Since "+fmtDate(cur.regime_since)+" · "+cur.days_in_regime+" day"+(cur.days_in_regime===1?"":"s");
+    $("sSafety").textContent=SAFETY[cur.safety_mode]||cur.safety_mode;
+    $("sDef").textContent=fmt(cur.baskets.defensive_pct)+"%";
+    var gen=new Date(cur.generated_at_utc),genTxt=isNaN(gen)?"—":gen.toISOString().slice(0,16).replace("T"," ")+" UTC";
+    $("sAsof").textContent=fmtDate(cur.as_of_date);
+    $("sUpd").textContent="Updated "+genTxt;
+    $("srcLine").textContent="Source: BC25 xv3.1 paper engine, point-in-time daily record since "+fmtDate(cur.record_start)+" · Engine output as of "+fmtDate(cur.as_of_date)+", updated "+genTxt+" · BTC/USD: CoinGecko, daily price at 00:00 UTC.";
+    var ageH=(Date.now()-gen.getTime())/36e5;
+    if(!isNaN(ageH)&&ageH>STALE_HOURS){$("delay").classList.add("show");$("delayTxt").textContent="Last update "+genTxt+" ("+Math.floor(ageH)+" hours ago).";}
+
+    // ---- current allocation ----
+    var b=cur.baskets,parts=[["Defensive",b.defensive_pct,BASKET.def],["Leaders (BTC, ETH, SOL)",b.leaders_pct,BASKET.lead],["Alts",b.alts_pct,BASKET.alt]];
+    $("bbar").innerHTML=parts.map(function(p){return '<span style="width:'+p[1]+'%;background:'+p[2]+'" title="'+p[0]+'"></span>';}).join("");
+    $("brows").innerHTML=parts.map(function(p){return '<div class="brow"><span><i style="background:'+p[2]+'"></i>'+p[0]+'</span><b>'+fmt(p[1])+'%</b></div>';}).join("");
+    $("holds").innerHTML=(cur.top_holdings||[]).map(function(h){return '<div class="brow"><span>'+h.asset+'</span><b>'+fmt(h.pct,2)+'%</b></div>';}).join("");
+
+    // ---- change log (newest first; plain-English labels only) ----
+    var rows=chg.slice().reverse();
+    document.querySelector("#logT tbody").innerHTML=rows.length?rows.map(function(c){
+      return '<tr><td style="white-space:nowrap">'+fmtDate(c.date)+'</td><td>'+tag(c.from)+' <span style="color:var(--muted)">→</span> '+tag(c.to)+'</td><td class="n">'+usd(c.btc_price)+'</td></tr>';}).join("")
+      :'<tr><td colspan="3" style="color:var(--muted)">No mode changes in the record yet.</td></tr>';
+    $("logNote").textContent="Record starts "+fmtDate(cur.record_start)+". A change after a gap in the record is dated to the first day back.";
+
+    // ---- chart data (bands match mode_history exactly; whitespace on missing days) ----
+    first=hist[0].date;last=hist[hist.length-1].date;
+    hist.forEach(function(h){histMap[h.date]=h;});
+    btc.forEach(function(p){btcMap[p.date]=p.close;});
+    var line=btc.filter(function(p){return p.date>=first&&p.date<=last;}).map(function(p){return {time:p.date,value:p.close};});
+    // a value on every calendar day of the record so the time axis has one slot per day (days with no run stay empty)
+    var axis=[];for(var d=first;d<=last;d=addDays(d,1))axis.push({time:d,value:50});
+
+    var L=LightweightCharts;
+    chart=L.createChart($("chart"),Object.assign(themeOpts(),{
+      autoSize:true,
+      layout:Object.assign(themeOpts().layout,{fontFamily:"Inter, system-ui, sans-serif",fontSize:12,attributionLogo:true,panes:{separatorColor:"rgba(128,140,170,.25)",enableResize:false}}),
+      rightPriceScale:{borderVisible:false},
+      timeScale:{borderVisible:false,rightOffset:2,fixLeftEdge:true,fixRightEdge:true},
+      crosshair:{mode:L.CrosshairMode.Normal},
+      handleScroll:{vertTouchDrag:false}
+    }));
+    btcS=chart.addSeries(L.LineSeries,{color:lineColor(),lineWidth:2,priceLineVisible:false,lastValueVisible:true,crosshairMarkerRadius:4,
+      priceFormat:{type:"custom",formatter:function(v){return "$"+Math.round(v).toLocaleString("en-US");}}},0);
+    btcS.setData(line);
+    btcS.attachPrimitive(new DayRects(chart,hist,function(h){return [{y0:0,y1:1,frac:true,color:hexA(M(h.regime).color,isLight()?0.20:0.26)}];}));
+    L.createSeriesMarkers(btcS,chg.filter(function(c){return c.date>=first&&c.date<=last;}).map(function(c){
+      return {time:c.date,position:"inBar",shape:"circle",color:M(c.to).color,size:1.2};}));
+
+    // allocation pane: stacked daily columns (defensive bottom, leaders, alts top) drawn per recorded day
+    var pct={type:"custom",formatter:function(v){return Math.round(v)+"%";}};
+    aAll=chart.addSeries(L.LineSeries,{color:"rgba(0,0,0,0)",lineVisible:false,pointMarkersVisible:false,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:pct,
+      autoscaleInfoProvider:function(){return {priceRange:{minValue:0,maxValue:100}};}},1);
+    aAll.setData(axis);
+    chart.priceScale("right",1).applyOptions({scaleMargins:{top:0.06,bottom:0.02}});
+    aAll.attachPrimitive(new DayRects(chart,hist,function(h){var a=h.defensive_pct,b=a+h.leaders_pct,c=b+h.alts_pct;
+      return [{y0:0,y1:a,color:BASKET.def},{y0:a,y1:b,color:BASKET.lead},{y0:b,y1:c,color:BASKET.alt}];},aAll));
+    var panes=chart.panes();if(panes[1]){panes[0].setStretchFactor(0.72);panes[1].setStretchFactor(0.28);}
+    chart.timeScale().fitContent();
+
+    // crosshair tooltip: date, BTC price, mode, defensive %
+    var tip=$("tip");
+    chart.subscribeCrosshairMove(function(p){
+      if(!p||!p.time||!p.point||p.point.x<0){tip.style.display="none";return;}
+      var t=p.time,iso=typeof t==="string"?t:(t.year?t.year+"-"+String(t.month).padStart(2,"0")+"-"+String(t.day).padStart(2,"0"):new Date(t*1000).toISOString().slice(0,10));
+      var h=histMap[iso],px=btcMap[iso];
+      tip.innerHTML='<div class="d">'+fmtDate(iso)+'</div>'+
+        '<div class="r"><span>BTC</span><b>'+(px!=null?usd(px):"—")+'</b></div>'+
+        '<div class="r"><span>Mode</span><b>'+(h?M(h.regime).label:"No run (gap)")+'</b></div>'+
+        '<div class="r"><span>Defensive</span><b>'+(h?fmt(h.defensive_pct)+"%":"—")+'</b></div>';
+      tip.style.display="block";
+      var w=$("chart").clientWidth,x=p.point.x;tip.style.left=(x>w/2?Math.max(8,x-tip.offsetWidth-16):x+16)+"px";
+    });
+  }
+  // Series primitive: fills one column per recorded day (no column on days with no run).
+  // rects: [{y0,y1,color,frac}] — frac:true = fraction of pane height (0 bottom..1 top); otherwise price values on `ser`.
+  function DayRects(ch,hist,rects,ser){this.ch=ch;this.hist=hist;this.rects=rects;this.ser=ser;var self=this;
+    this._v={zOrder:function(){return "bottom";},renderer:function(){return {draw:function(t){self.draw(t);}};}};}
+  DayRects.prototype.attached=function(p){this.req=p.requestUpdate;};
+  DayRects.prototype.updateAllViews=function(){};
+  DayRects.prototype.paneViews=function(){return [this._v];};
+  DayRects.prototype.draw=function(target){var self=this,ts=this.ch.timeScale(),sp=ts.options().barSpacing;
+    target.useBitmapCoordinateSpace(function(sc){var c=sc.context,hr=sc.horizontalPixelRatio,vr=sc.verticalPixelRatio,H=sc.bitmapSize.height;
+      self.hist.forEach(function(h){var x=ts.timeToCoordinate(h.date);if(x==null)return;
+        var x0=Math.round((x-sp/2)*hr),x1=Math.round((x+sp/2)*hr);   // adjacent days share an edge exactly (no overlap seams)
+        self.rects(h).forEach(function(r){var ya,yb;
+          if(r.frac){ya=H*(1-r.y1);yb=H*(1-r.y0);}
+          else{var p1=self.ser.priceToCoordinate(r.y1),p0=self.ser.priceToCoordinate(r.y0);if(p1==null||p0==null)return;ya=p1*vr;yb=p0*vr;}
+          c.fillStyle=r.color;c.fillRect(x0,Math.round(ya),Math.max(1,x1-x0),Math.round(yb)-Math.round(ya));});
+      });});};
+
+  // range buttons (clamped to the record)
+  document.querySelectorAll(".ranges button").forEach(function(btn){
+    btn.addEventListener("click",function(){
+      if(!chart)return;
+      document.querySelectorAll(".ranges button").forEach(function(b){b.classList.toggle("on",b===btn);});
+      var mo=+btn.getAttribute("data-r");
+      if(!mo){chart.timeScale().fitContent();return;}
+      var from=addMonths(last,-mo);if(from<first)from=first;
+      chart.timeScale().setVisibleRange({from:from,to:last});
+    });
+  });
+
+  // ---- theme (shared with the other pages) ----
+  function lineColor(){return isLight()?"#0b1124":"#e6e9f5";}
+  function themeOpts(){var l=isLight();return {
+    layout:{background:{type:"solid",color:l?"#ffffff":"#11162b"},textColor:l?"#5f6886":"#8a93b2"},
+    grid:{vertLines:{color:l?"rgba(16,24,48,.05)":"rgba(255,255,255,.04)"},horzLines:{color:l?"rgba(16,24,48,.06)":"rgba(255,255,255,.05)"}}};}
+  function restyle(){
+    if(!chart)return;
+    chart.applyOptions(themeOpts());btcS.applyOptions({color:lineColor()});
+  }
+  function syncTheme(){var l=isLight();
+    $("themeBtn").setAttribute("aria-label",l?"Switch to dark mode":"Switch to light mode");
+    var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",l?"#f3f5fa":"#090e1f");}
+  $("themeBtn").addEventListener("click",function(){
+    var r=document.documentElement,l=r.getAttribute("data-theme")!=="light";
+    if(l)r.setAttribute("data-theme","light");else r.removeAttribute("data-theme");
+    try{localStorage.setItem("bcd_theme",l?"light":"dark");}catch(e){}syncTheme();restyle();
+  });
+  syncTheme();
+})();
+</script>
+</body>
+</html>
