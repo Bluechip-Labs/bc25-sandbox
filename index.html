@@ -69,7 +69,7 @@
   .tok{display:flex;align-items:center;gap:9px;background:var(--pill);border:0;border-radius:9999px;padding:8px 16px 8px 10px;font-size:15px;font-weight:600;flex:none;cursor:default}
   .tok img,.tok .ic{width:28px;height:28px;border-radius:50%;flex:none}
   .tok .ic{display:grid;place-items:center;background:#2775ca;color:#fff;font-weight:800;font-size:14px}
-  .tok img{object-fit:contain;border-radius:0}
+  .tok img{object-fit:contain}
   .amt{flex:1;min-width:0;text-align:right}
   .amt input{width:100%;background:none;border:0;outline:0;color:#fff;font-family:var(--f);font-size:28px;font-weight:500;text-align:right;padding:0;font-variant-numeric:tabular-nums}
   .amt input::placeholder{color:var(--dim)}
@@ -220,8 +220,8 @@
   var st=load(), nav=null, navPrev=null, dir="buy"; // buy = USDC -> BC25
 
   var TOK={
-    USDC:'<span class="ic" aria-hidden="true">$</span>USDC',
-    BC25:'<img src="/bluechip-defender-logo.png" alt="">BC25'
+    USDC:'<img src="/usdc.svg" alt="">USDC',
+    BC25:'<img src="/bc25-coin.png" alt="">BC25'
   };
 
   // ---- nightly NAV from the Stage B data file (same source as the dashboard) ----
